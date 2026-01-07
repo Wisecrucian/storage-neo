@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: event-storage-service
+    ports:
+      - "8081:8080"
+    environment:
+      # Для Mac/Windows используем host.docker.internal, для Linux - localhost
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:-host.docker.internal:9092}
+      CLICKHOUSE_URL: ${CLICKHOUSE_URL:-jdbc:clickhouse://host.docker.internal:8123/default}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
