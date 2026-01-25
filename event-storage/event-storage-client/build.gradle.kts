@@ -1,51 +1,17 @@
-plugins {
-    `java-library`
-    `maven-publish`
+plugins{
+    alias(libs.plugins.spring.boot)
+    java
 }
+java.sourceCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_17
 
-java {
-    withJavadocJar()
-    withSourcesJar()
-}
-
-dependencies {
-    // HTTP Client
-    implementation(libs.okhttp)
-    
-    // JSON Processing
-    implementation(libs.jackson.databind)
-    implementation(libs.jackson.datatype.jsr310)
-    
-    // Logging
-    api(libs.slf4j.api)
-    
-    // Testing
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
-    testImplementation(libs.mockito.core)
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-tasks.test {
+tasks.withType<Test> {
+    systemProperty("user.timezone", "Europe/Moscow")
+    jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED")
     useJUnitPlatform()
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            from(components["java"])
-            
-            pom {
-                name.set("Event Storage Client")
-                description.set("Java client library for Event Storage Service")
-                url.set("https://github.com/example/event-storage")
-                
-                licenses {
-                    license {
-                        name.set("MIT License")
-                        url.set("https://opensource.org/licenses/MIT")
-                    }
-                }
-            }
-        }
-    }
+
+tasks.withType<Jar> {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
