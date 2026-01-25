@@ -1,22 +1,15 @@
-plugins{
+plugins {
     alias(libs.plugins.spring.boot)
     java
 }
 
-java.sourceCompatibility = JavaVersion.VERSION_17
-java.targetCompatibility = JavaVersion.VERSION_17
-
-tasks.withType<Test> {
-    systemProperty("user.timezone", "Europe/Moscow")
-    jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED")
-    useJUnitPlatform()
-}
-
-
-tasks.withType<Jar> {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
 dependencies {
-    implementation(project(":event-storage-client")) { isTransitive = false }
+    implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.kafka)
+    
+    testImplementation(libs.spring.boot.starter.test)
+}
+
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    archiveFileName.set("${project.name}-${project.version}.jar")
 }

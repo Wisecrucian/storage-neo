@@ -1,4 +1,4 @@
-package one.ids.storage;
+package one.idsstorage;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -10,4 +10,3 @@ public class EventStorageApplication {
         SpringApplication.run(EventStorageApplication.class, args);
     }
 }
-

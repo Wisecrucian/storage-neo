@@ -1,7 +1,6 @@
 pluginManagement {
     repositories {
-        maven("https://nexus.odkl.ru/repository/maven-public")
-        mavenLocal()
+        mavenCentral()
         gradlePluginPortal()
     }
 }

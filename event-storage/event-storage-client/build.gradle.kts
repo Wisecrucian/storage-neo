@@ -1,17 +1,15 @@
-plugins{
-    alias(libs.plugins.spring.boot)
-    java
+plugins {
+    `java-library`
 }
-java.sourceCompatibility = JavaVersion.VERSION_17
-java.targetCompatibility = JavaVersion.VERSION_17
 
-tasks.withType<Test> {
-    systemProperty("user.timezone", "Europe/Moscow")
-    jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED")
+dependencies {
+    implementation(libs.okhttp)
+    implementation(libs.jackson.databind)
+    
+    testImplementation(platform("org.junit:junit-bom:5.10.1"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+}
+
+tasks.test {
     useJUnitPlatform()
-}
-
-
-tasks.withType<Jar> {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
