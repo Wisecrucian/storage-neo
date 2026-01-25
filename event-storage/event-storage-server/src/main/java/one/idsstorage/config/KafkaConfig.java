@@ -1,4 +1,4 @@
-package com.example.eventstorage.config;
+package one.idsstorage.config;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -36,7 +36,4 @@ public class KafkaConfig {
         return new KafkaTemplate<>(producerFactory());
     }
 }
-
-
-
 

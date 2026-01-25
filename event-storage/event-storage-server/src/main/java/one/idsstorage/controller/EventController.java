@@ -1,7 +1,6 @@
-package com.example.eventstorage.controller;
+package one.idsstorage.controller;
 
-import com.example.eventstorage.service.KafkaProducerService;
-import lombok.RequiredArgsConstructor;
+import one.idsstorage.service.KafkaProducerService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,10 +8,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/events")
-@RequiredArgsConstructor
 public class EventController {
 
     private final KafkaProducerService kafkaProducerService;
+    
+    public EventController(KafkaProducerService kafkaProducerService) {
+        this.kafkaProducerService = kafkaProducerService;
+    }
 
     @PostMapping("/send")
     public ResponseEntity<Map<String, String>> sendEvent(
@@ -41,7 +43,4 @@ public class EventController {
         ));
     }
 }
-
-
-
 
