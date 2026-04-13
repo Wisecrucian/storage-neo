@@ -12,9 +12,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Service
 public class ClickHouseRecordQueryService implements RecordQueryService {
+    private static final Pattern SAFE_ATTR = Pattern.compile("[A-Za-z0-9_]+");
     private final ClickHouseClient clickHouseClient;
     private final ClickHouseMapper mapper;
     private final RecordStorageMetrics metrics;
@@ -35,10 +37,7 @@ public class ClickHouseRecordQueryService implements RecordQueryService {
         try {
             int safeLimit = Math.max(1, Math.min(filter == null ? 100 : filter.getLimit(), 1000));
             String where = buildModerationWhere(filter);
-            // ORDER BY (user_id, record_type, event_time) — primary index used for user_id lookups.
-            // record_type is the 2nd key, so filtering by both hits the index directly.
-            // Avoid adding conditions outside (user_id, record_type) to keep index range tight.
-            String sql = "SELECT event_time, ingest_time, record_type, event_id, user_id, chat_id, message_id, attrs " +
+            String sql = "SELECT event_time, ingest_time, record_type, event_id, attrs " +
                     "FROM default.events_raw " +
                     "WHERE " + where + " " +
                     "ORDER BY event_time DESC LIMIT " + safeLimit + " FORMAT JSONEachRow";
@@ -46,13 +45,32 @@ public class ClickHouseRecordQueryService implements RecordQueryService {
             List<Record> rows = mapper.toRecordListFromJsonEachRow(raw);
             Map<String, Integer> byRecordType = new LinkedHashMap<>();
             for (Record row : rows) {
-                String rt = row.getRecordType() == null ? "OTHER" : row.getRecordType().name();
+                String rt = row.getCoarseRecordType().name();
                 byRecordType.merge(rt, 1, Integer::sum);
             }
             metrics.markReadWithRecordTypeBreakdown("moderation", System.nanoTime() - started, byRecordType);
             return rows;
         } catch (Exception e) {
             throw new RuntimeException("Failed moderation query", e);
+        }
+    }
+
+    @Override
+    public List<Record> search(Map<String, String> filters, int limit) {
+        long started = System.nanoTime();
+        try {
+            int safeLimit = Math.max(1, Math.min(limit, 1000));
+            String where = buildSearchWhere(filters);
+            String sql = "SELECT event_time, ingest_time, record_type, event_id, attrs " +
+                    "FROM default.events_raw " +
+                    "WHERE " + where + " " +
+                    "ORDER BY event_time DESC LIMIT " + safeLimit + " FORMAT JSONEachRow";
+            String raw = clickHouseClient.query(sql);
+            return mapper.toRecordListFromJsonEachRow(raw);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed search query", e);
+        } finally {
+            metrics.markRead("search", System.nanoTime() - started);
         }
     }
 
@@ -140,15 +158,6 @@ public class ClickHouseRecordQueryService implements RecordQueryService {
             return "1 = 1";
         }
         List<String> conditions = new ArrayList<>();
-        if (f.getUserId() != null) {
-            conditions.add("user_id = " + f.getUserId());
-        }
-        if (f.getChatId() != null) {
-            conditions.add("chat_id = " + f.getChatId());
-        }
-        if (f.getMessageId() != null) {
-            conditions.add("message_id = " + f.getMessageId());
-        }
         if (f.getRecordType() != null && !f.getRecordType().isBlank()) {
             String escaped = f.getRecordType().replace("'", "").toUpperCase();
             conditions.add("record_type = '" + escaped + "'");
@@ -172,5 +181,54 @@ public class ClickHouseRecordQueryService implements RecordQueryService {
         }
         String escaped = iso.replace("'", "");
         return "parseDateTimeBestEffort('" + escaped + "')";
+    }
+
+    private String buildSearchWhere(Map<String, String> filters) {
+        if (filters == null || filters.isEmpty()) {
+            return "1 = 1";
+        }
+        List<String> conditions = new ArrayList<>();
+        for (Map.Entry<String, String> e : filters.entrySet()) {
+            if (e.getKey() == null || e.getValue() == null) {
+                continue;
+            }
+            String key = e.getKey().trim();
+            String value = e.getValue().trim();
+            if (key.isEmpty() || value.isEmpty()) {
+                continue;
+            }
+            String upper = key.toUpperCase();
+            switch (upper) {
+                case "USER_ID":
+                    conditions.add("user_id = " + parseLong(value, "USER_ID"));
+                    break;
+                case "RECORD_TYPE":
+                    conditions.add("record_type = '" + value.replace("'", "").toUpperCase() + "'");
+                    break;
+                case "EVENT_ID":
+                    conditions.add("event_id = '" + value.replace("'", "") + "'");
+                    break;
+                default:
+                    if (!SAFE_ATTR.matcher(upper).matches()) {
+                        throw new IllegalArgumentException("Invalid attribute name: " + key);
+                    }
+                    String attrKey = upper.toLowerCase();
+                    conditions.add("attrs['" + attrKey + "'] = '" + escapeSqlLiteral(value) + "'");
+                    break;
+            }
+        }
+        return conditions.isEmpty() ? "1 = 1" : String.join(" AND ", conditions);
+    }
+
+    private long parseLong(String value, String fieldName) {
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException nfe) {
+            throw new IllegalArgumentException(fieldName + " must be a number: " + value);
+        }
+    }
+
+    private String escapeSqlLiteral(String value) {
+        return value.replace("\\", "\\\\").replace("'", "\\'");
     }
 }

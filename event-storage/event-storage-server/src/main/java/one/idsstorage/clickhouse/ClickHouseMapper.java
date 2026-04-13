@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import one.idsstorage.domain.AggregationResult;
 import one.idsstorage.domain.Record;
-import one.idsstorage.domain.RecordType;
+import one.idsstorage.domain.UserActivityType;
 import one.idsstorage.util.UuidV7;
 import org.springframework.stereotype.Component;
 
@@ -34,18 +34,24 @@ public class ClickHouseMapper {
         Map<String, Object> row = new LinkedHashMap<>();
         row.put("event_time", formatForClickHouse(r.getEventTime() == null ? Instant.now() : r.getEventTime()));
         row.put("ingest_time", formatForClickHouse(r.getIngestTime() == null ? Instant.now() : r.getIngestTime()));
-        row.put("record_type", r.getRecordType() == null ? RecordType.OTHER.name() : r.getRecordType().name());
+        row.put("record_type", r.getCoarseRecordType().name());
         row.put("event_id", toUuid(r.getEventId()));
-        row.put("user_id", r.getUserId() == null ? 0L : r.getUserId());
-        row.put("chat_id", r.getChatId() == null ? 0L : r.getChatId());
-        row.put("message_id", r.getMessageId() == null ? 0L : r.getMessageId());
 
         Map<String, String> attrs = new LinkedHashMap<>();
         if (r.getAttrs() != null) {
             for (Map.Entry<String, Object> e : r.getAttrs().entrySet()) {
-                attrs.put(e.getKey(), e.getValue() == null ? "" : String.valueOf(e.getValue()));
+                String key = e.getKey() == null ? "" : e.getKey().toLowerCase();
+                if (!key.isBlank()) {
+                    attrs.put(key, e.getValue() == null ? "" : String.valueOf(e.getValue()));
+                }
             }
         }
+        if (r.getActivityType() != null) {
+            attrs.putIfAbsent("type", r.getActivityType().name());
+        }
+        row.put("user_id", parseLongOrZero(attrs.get("user_id")));
+        row.put("chat_id", parseLongOrZero(attrs.get("chat_id")));
+        row.put("message_id", parseLongOrZero(attrs.get("message_id")));
         row.put("attrs", attrs);
         return objectMapper.writeValueAsString(row);
     }
@@ -57,27 +63,38 @@ public class ClickHouseMapper {
             JsonNode node = objectMapper.readTree(line);
             Record r = new Record();
             r.setEventId(node.path("event_id").asText());
-            r.setEventType(node.path("record_type").asText());
-            r.setRecordType(RecordType.fromRaw(node.path("record_type").asText()));
             if (!node.path("event_time").isMissingNode()) {
                 r.setEventTime(parseClickHouseInstant(node.path("event_time").asText()));
             }
             if (!node.path("ingest_time").isMissingNode()) {
                 r.setIngestTime(parseClickHouseInstant(node.path("ingest_time").asText()));
             }
-            r.setUserId(node.path("user_id").asLong(0));
-            r.setChatId(node.path("chat_id").asLong(0));
-            r.setMessageId(node.path("message_id").asLong(0));
 
+            Map<String, Object> attrs = new LinkedHashMap<>();
             JsonNode attrsNode = node.path("attrs");
             if (attrsNode.isObject()) {
-                Map<String, Object> attrs = new LinkedHashMap<>();
                 Iterator<Map.Entry<String, JsonNode>> fields = attrsNode.fields();
                 while (fields.hasNext()) {
                     Map.Entry<String, JsonNode> f = fields.next();
-                    attrs.put(f.getKey(), f.getValue().asText());
+                    String k = f.getKey() == null ? "" : f.getKey().toLowerCase();
+                    if (!k.isBlank()) {
+                        attrs.put(k, f.getValue().asText());
+                    }
                 }
+            }
+            long uidCol = node.path("user_id").asLong(0);
+            if (uidCol != 0) {
+                attrs.putIfAbsent("user_id", String.valueOf(uidCol));
+            }
+            if (!attrs.isEmpty()) {
                 r.setAttrs(attrs);
+                Object typeRaw = attrs.get("type");
+                if (typeRaw != null) {
+                    UserActivityType at = UserActivityType.fromRaw(String.valueOf(typeRaw));
+                    if (at != null) {
+                        r.setActivityType(at);
+                    }
+                }
             }
             out.add(r);
         }
@@ -110,14 +127,22 @@ public class ClickHouseMapper {
     }
 
     private String toUuid(String id) {
-        // Если клиент не передал event_id — генерируем UUID v7 (time-ordered).
-        // v7: первые 48 бит = Unix timestamp мс → соседние записи имеют
-        // почти одинаковый префикс → LZ4 сжимает в 5-10× лучше чем v4.
         if (id == null || id.isBlank()) return UuidV7.generate().toString();
         try {
             return UUID.fromString(id).toString();
         } catch (IllegalArgumentException e) {
             return UuidV7.generate().toString();
+        }
+    }
+
+    private long parseLongOrZero(String value) {
+        if (value == null || value.isBlank()) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException ignored) {
+            return 0L;
         }
     }
 

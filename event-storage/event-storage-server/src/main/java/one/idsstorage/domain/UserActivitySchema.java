@@ -3,9 +3,11 @@ package one.idsstorage.domain;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Schema definition for user activity events — mirrors the legacy
@@ -23,11 +25,9 @@ import java.util.Map;
  *       without changing the write path.</li>
  * </ul>
  *
- * <p>The legacy system used {@code StorageSchemaBuilder.addType(type, attributes...)}
- * to register which attributes belong to each type. Here we use
- * {@link #ATTRIBUTES_BY_TYPE} for the same purpose, but the enforcement is
- * advisory — extra attributes are accepted into {@code attrs} without error
- * (ClickHouse Map is schema-free).
+ * <p>Type-specific attribute sets are defined in {@link #ATTRIBUTES_BY_TYPE}.
+ * {@link #validateStrict(Record)} rejects any {@code attrs} key outside
+ * {@link #REQUIRED_ATTRIBUTES} plus the list for the resolved {@link UserActivityType}.
  *
  * @see StorageAttribute
  * @see UserActivityType
@@ -81,6 +81,8 @@ public final class UserActivitySchema {
     public static final StorageAttribute<Boolean> USER_ACTIVE_STATUS = attr("USER_ACTIVE_STATUS", Boolean.class);
     public static final StorageAttribute<String> LANG =
             attr("LANG", String.class, "ru", "en", "de", "fr", "zh", "es");
+    public static final StorageAttribute<String> SOURCE =
+            attr("SOURCE", String.class, "mobile", "web", "backend", "desktop");
 
     // ── Message ──────────────────────────────────────────────────────────
 
@@ -191,28 +193,28 @@ public final class UserActivitySchema {
         // Messaging (5–12 attrs)
         m.put(UserActivityType.MESSAGE_SENT, List.of(
                 CHAT_ID, MESSAGE_ID, MESSAGE_LENGTH, HAS_ATTACHMENTS, ATTACHMENT_COUNT,
-                ATTACHMENT_TYPE, IS_FORWARDED, IS_REPLY, SOURCE_CHAT_ID, LANG,
+                ATTACHMENT_TYPE, IS_FORWARDED, IS_REPLY, SOURCE_CHAT_ID, LANG, SOURCE,
                 USER_GROUP_ADMIN, USER_CHAT_ADMIN));
         m.put(UserActivityType.MESSAGE_DELETED, List.of(
-                CHAT_ID, MESSAGE_ID, USER_CHAT_ADMIN));
+                CHAT_ID, MESSAGE_ID, USER_CHAT_ADMIN, SOURCE));
         m.put(UserActivityType.MESSAGE_EDITED, List.of(
-                CHAT_ID, MESSAGE_ID, MESSAGE_LENGTH, LANG));
+                CHAT_ID, MESSAGE_ID, MESSAGE_LENGTH, LANG, SOURCE));
         m.put(UserActivityType.MESSAGE_READ, List.of(
-                CHAT_ID, MESSAGE_ID));
+                CHAT_ID, MESSAGE_ID, SOURCE));
         m.put(UserActivityType.REACTION_ADDED, List.of(
-                CHAT_ID, MESSAGE_ID, REACTION_TYPE));
+                CHAT_ID, MESSAGE_ID, REACTION_TYPE, SOURCE));
         m.put(UserActivityType.REACTION_REMOVED, List.of(
-                CHAT_ID, MESSAGE_ID, REACTION_TYPE));
+                CHAT_ID, MESSAGE_ID, REACTION_TYPE, SOURCE));
 
         // Moderation (5–10 attrs)
         m.put(UserActivityType.MODERATION_FLAG, List.of(
                 CHAT_ID, MESSAGE_ID, MODERATION_SCORE, MODERATION_CATEGORY,
-                IS_AUTOMATED, REPORT_COUNT, LANG, GROUP_PROMO));
+                IS_AUTOMATED, REPORT_COUNT, LANG, SOURCE, GROUP_PROMO));
         m.put(UserActivityType.MODERATION_APPROVE, List.of(
-                CHAT_ID, MESSAGE_ID, MODERATION_ACTION, IS_AUTOMATED));
+                CHAT_ID, MESSAGE_ID, MODERATION_ACTION, IS_AUTOMATED, SOURCE));
         m.put(UserActivityType.MODERATION_REJECT, List.of(
                 CHAT_ID, MESSAGE_ID, MODERATION_ACTION, MODERATION_CATEGORY,
-                IS_AUTOMATED, USER_CHAT_ADMIN));
+                IS_AUTOMATED, USER_CHAT_ADMIN, SOURCE));
 
         // Purchase (4–8 attrs)
         m.put(UserActivityType.PURCHASE_INITIATED, List.of(
@@ -243,11 +245,11 @@ public final class UserActivitySchema {
 
         // Files (3–6 attrs)
         m.put(UserActivityType.FILE_UPLOADED, List.of(
-                CHAT_ID, FILE_SIZE_KB, FILE_TYPE, MIME_TYPE, HAS_ATTACHMENTS));
+                CHAT_ID, FILE_SIZE_KB, FILE_TYPE, MIME_TYPE, HAS_ATTACHMENTS, SOURCE));
         m.put(UserActivityType.FILE_DOWNLOADED, List.of(
-                CHAT_ID, FILE_SIZE_KB, FILE_TYPE));
+                CHAT_ID, FILE_SIZE_KB, FILE_TYPE, SOURCE));
         m.put(UserActivityType.FILE_DELETED, List.of(
-                CHAT_ID, FILE_SIZE_KB, FILE_TYPE));
+                CHAT_ID, FILE_SIZE_KB, FILE_TYPE, SOURCE));
 
         // Calls (3–5 attrs)
         m.put(UserActivityType.CALL_STARTED, List.of(
@@ -278,7 +280,7 @@ public final class UserActivitySchema {
     public static final List<StorageAttribute<?>> ALL_ATTRIBUTES = List.of(
             TYPE, TIMESTAMP, USER_ID,
             SESSION_ID, USER_DEVICE_TYPE, PLATFORM_VERSION, APP_VERSION,
-            TERMINAL_TYPE, ORG_HASH, GENDER, USER_ACTIVE_STATUS, LANG,
+            TERMINAL_TYPE, ORG_HASH, GENDER, USER_ACTIVE_STATUS, LANG, SOURCE,
             CHAT_ID, MESSAGE_ID, MESSAGE_LENGTH, HAS_ATTACHMENTS, ATTACHMENT_COUNT,
             ATTACHMENT_TYPE, IS_FORWARDED, IS_REPLY, REACTION_TYPE, CHANNEL_ID,
             THREAD_ID, SOURCE_CHAT_ID,
@@ -303,6 +305,113 @@ public final class UserActivitySchema {
             tmp.put(a.chKey(), a); // also index by CH key for deserialization
         }
         BY_NAME = Collections.unmodifiableMap(tmp);
+    }
+
+    /**
+     * Rejects records whose {@code attrs} keys are not exactly the union of
+     * {@link #REQUIRED_ATTRIBUTES} (by ClickHouse map key) and the list for the
+     * resolved {@link UserActivityType}. Also checks {@code eventTime},
+     * {@code user_id}, and consistency between {@link Record#getActivityType()}
+     * and {@code attrs['type']}.
+     *
+     * @throws IllegalArgumentException if validation fails
+     */
+    public static void validateStrict(Record r) {
+        if (r == null) {
+            throw new IllegalArgumentException("record is null");
+        }
+        Map<String, Object> attrs = r.getAttrs();
+        if (attrs == null) {
+            throw new IllegalArgumentException("attrs required");
+        }
+
+        UserActivityType fromField = r.getActivityType();
+        Object typeRaw = attrs.get(TYPE.chKey());
+        UserActivityType fromAttr = typeRaw == null ? null : UserActivityType.fromRaw(String.valueOf(typeRaw));
+
+        if (fromField != null && fromAttr != null && fromField != fromAttr) {
+            throw new IllegalArgumentException(
+                    "activityType and attrs.type mismatch: " + fromField + " vs " + fromAttr);
+        }
+        UserActivityType at = fromField != null ? fromField : fromAttr;
+        if (at == null) {
+            throw new IllegalArgumentException("activity type required (activityType or attrs.type)");
+        }
+
+        if (r.getEventTime() == null) {
+            throw new IllegalArgumentException("eventTime required");
+        }
+
+        Object uid = attrs.get(USER_ID.chKey());
+        if (uid == null || String.valueOf(uid).isBlank()) {
+            throw new IllegalArgumentException("user_id required in attrs");
+        }
+        try {
+            Long.parseLong(String.valueOf(uid).trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("user_id must be a number");
+        }
+
+        List<StorageAttribute<?>> byType = ATTRIBUTES_BY_TYPE.get(at);
+        if (byType == null) {
+            throw new IllegalArgumentException("no schema for activity type: " + at);
+        }
+
+        Set<String> allowedKeys = new HashSet<>();
+        for (StorageAttribute<?> a : REQUIRED_ATTRIBUTES) {
+            allowedKeys.add(a.chKey());
+        }
+        for (StorageAttribute<?> a : byType) {
+            allowedKeys.add(a.chKey());
+        }
+
+        for (Map.Entry<String, Object> e : attrs.entrySet()) {
+            String key = e.getKey();
+            if (key == null) {
+                continue;
+            }
+            String nk = key.toLowerCase();
+            if (!allowedKeys.contains(nk)) {
+                throw new IllegalArgumentException("Unknown attribute for " + at + ": " + key);
+            }
+            StorageAttribute<?> spec = BY_NAME.get(nk);
+            if (spec != null) {
+                validateAttrValue(spec, e.getValue());
+            }
+        }
+    }
+
+    private static void validateAttrValue(StorageAttribute<?> attr, Object raw) {
+        if (raw == null) {
+            return;
+        }
+        if (attr == TIMESTAMP) {
+            return;
+        }
+        String s = String.valueOf(raw).trim();
+        if (s.isEmpty()) {
+            return;
+        }
+        Class<?> t = attr.getType();
+        if (t == Long.class) {
+            try {
+                Long.parseLong(s);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid " + attr.getName() + ": " + raw);
+            }
+            return;
+        }
+        if (t == Boolean.class) {
+            boolean ok = "1".equals(s) || "0".equals(s)
+                    || "true".equalsIgnoreCase(s) || "false".equalsIgnoreCase(s);
+            if (!ok) {
+                throw new IllegalArgumentException("Invalid " + attr.getName() + ": " + raw);
+            }
+            return;
+        }
+        if (t == String.class && attr.getAllowedValues() != null) {
+            attr.validate(s);
+        }
     }
 
     private UserActivitySchema() {}

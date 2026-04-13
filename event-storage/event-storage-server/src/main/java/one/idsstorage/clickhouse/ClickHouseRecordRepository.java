@@ -1,6 +1,7 @@
 package one.idsstorage.clickhouse;
 
 import one.idsstorage.domain.Record;
+import one.idsstorage.domain.UserActivitySchema;
 import one.idsstorage.metrics.RecordStorageMetrics;
 import one.idsstorage.repository.RecordRepository;
 import org.slf4j.Logger;
@@ -46,6 +47,9 @@ public class ClickHouseRecordRepository implements RecordRepository {
         if (records == null || records.isEmpty()) {
             return;
         }
+        for (Record r : records) {
+            UserActivitySchema.validateStrict(r);
+        }
 
         int total = records.size();
         int offset = 0;
@@ -71,20 +75,14 @@ public class ClickHouseRecordRepository implements RecordRepository {
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
         long flushStarted = System.nanoTime();
         Map<String, Integer> countsByRecordType = new LinkedHashMap<>();
-
-        // Публикуем каждую запись как отдельное Kafka-сообщение.
-        // ClickHouse Kafka Engine читает топик events.raw и через Materialized View
-        // пишет в events_raw (MergeTree). Это даёт async decoupling: write latency
-        // теперь = latency produce в Kafka (~1-5ms), а не INSERT в CH (~100-300ms).
         List<org.apache.kafka.clients.producer.ProducerRecord<String, String>> kafkaRecords = new ArrayList<>(batch.size());
         for (Record r : batch) {
             String json = mapper.toJsonEachRowLine(r);
-            String recordType = (r == null || r.getRecordType() == null) ? "OTHER" : r.getRecordType().name();
+            String recordType = (r == null) ? "OTHER" : r.getCoarseRecordType().name();
             countsByRecordType.merge(recordType, 1, Integer::sum);
             kafkaRecords.add(new org.apache.kafka.clients.producer.ProducerRecord<>(TOPIC, recordType, json));
         }
 
-        // Отправляем все сообщения и ждём подтверждения последнего (acks=all)
         var lastFuture = kafkaTemplate.send(kafkaRecords.get(kafkaRecords.size() - 1));
         for (int i = 0; i < kafkaRecords.size() - 1; i++) {
             kafkaTemplate.send(kafkaRecords.get(i));

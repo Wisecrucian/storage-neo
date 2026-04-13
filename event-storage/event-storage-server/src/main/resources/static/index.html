@@ -3,75 +3,81 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Event Storage UI</title>
+  <title>Event Storage UI (Vue)</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; background: #f7f7f9; color: #222; }
     .card { background: #fff; padding: 16px; border-radius: 8px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; }
-    input, button { padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    input, button, select, textarea { padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+    textarea { width: 100%; min-height: 120px; }
     button { cursor: pointer; background: #2563eb; color: #fff; border: none; }
+    button.secondary { background: #4b5563; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
     .ok { color: #15803d; }
     .bad { color: #b91c1c; }
     code { background: #eef2ff; padding: 2px 6px; border-radius: 4px; }
+    pre { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; overflow: auto; }
   </style>
 </head>
 <body>
-<h2>Event Storage UI</h2>
+<div id="app">
+  <h2>Event Storage UI (Vue 3)</h2>
 
-<div class="card">
-  <h3>Infra status</h3>
-  <div id="status">Loading...</div>
-</div>
+  <div class="card">
+    <h3>Infra status</h3>
+    <div v-if="infraLoaded">
+      ClickHouse:
+      <span :class="status.clickhouseUp ? 'ok' : 'bad'">{{ status.clickhouseUp ? 'UP' : 'DOWN' }}</span>
+      | API: <span class="ok">UP</span>
+    </div>
+    <div v-else>Loading...</div>
+  </div>
 
-<div class="card">
-  <h3>Send event</h3>
-  <div class="row">
-    <input id="eventType" placeholder="eventType" value="ui_test_event" />
-    <input id="userId" placeholder="userId" value="user-ui" />
-    <select id="recordType" style="padding:8px;border:1px solid #ccc;border-radius:6px;">
-      <option value="MESSAGE">MESSAGE</option>
-      <option value="MODERATION">MODERATION</option>
-      <option value="PURCHASE">PURCHASE</option>
-      <option value="SYSTEM">SYSTEM</option>
-      <option value="OTHER">OTHER</option>
-    </select>
-    <button id="sendBtn">Send</button>
+  <div class="card">
+    <h3>Send event</h3>
+    <div class="row">
+      <input v-model="sendForm.eventType" placeholder="eventType" />
+      <input v-model="sendForm.userId" placeholder="userId" />
+      <select v-model="sendForm.recordType">
+        <option>MESSAGE</option>
+        <option>MODERATION</option>
+        <option>PURCHASE</option>
+        <option>SYSTEM</option>
+        <option>OTHER</option>
+      </select>
+      <button :disabled="busy.sendEvent" @click="sendEvent">Send</button>
+    </div>
+    <p>Custom fields JSON (optional):</p>
+    <textarea v-model="sendForm.customFieldsJson"></textarea>
+    <pre>{{ sendResult }}</pre>
   </div>
-  <p>Custom fields JSON (optional):</p>
-  <textarea id="customFields" rows="6" style="width:100%;border:1px solid #ccc;border-radius:6px;padding:8px;">
-{
-  "sessionId": "sess-1",
-  "ipAddress": "127.0.0.1"
-}
-  </textarea>
-  <pre id="sendResult"></pre>
-</div>
 
-<div class="card">
-  <h3>Latest events from ClickHouse</h3>
-  <div class="row">
-    <input id="limit" type="number" value="20" min="1" max="200" />
-    <button id="refreshBtn">Refresh</button>
-  </div>
-  <div class="row" style="margin-top:8px;">
-    <input id="searchField" placeholder="custom field (e.g. sessionId or nested.key)" style="min-width:320px;" />
-    <input id="searchValue" placeholder="value" style="min-width:240px;" />
-    <select id="recordTypeSearch" style="padding:8px;border:1px solid #ccc;border-radius:6px;">
-      <option value="">recordType...</option>
-      <option value="MESSAGE">MESSAGE</option>
-      <option value="MODERATION">MODERATION</option>
-      <option value="PURCHASE">PURCHASE</option>
-      <option value="SYSTEM">SYSTEM</option>
-      <option value="OTHER">OTHER</option>
-    </select>
-    <button id="searchRecordTypeBtn">Search recordType</button>
-    <button id="searchBtn">Search custom field</button>
-    <button id="clearSearchBtn" style="background:#4b5563;">Clear search</button>
-  </div>
-  <table>
-    <thead>
+  <div class="card">
+    <h3>Latest events from ClickHouse</h3>
+    <div class="row">
+      <input v-model.number="eventsLimit" type="number" min="1" max="200" />
+      <button :disabled="busy.events" @click="loadEvents">Refresh</button>
+    </div>
+    <div class="row" style="margin-top:8px;">
+      <input v-model="search.field" placeholder="custom field (e.g. sessionId or nested.key)" style="min-width:320px;" />
+      <input v-model="search.value" placeholder="value" style="min-width:240px;" />
+      <select v-model="search.recordType">
+        <option value="">recordType...</option>
+        <option>MESSAGE</option>
+        <option>MODERATION</option>
+        <option>PURCHASE</option>
+        <option>SYSTEM</option>
+        <option>OTHER</option>
+      </select>
+      <button :disabled="busy.events" @click="searchByRecordType">Search recordType</button>
+      <button :disabled="busy.events" @click="searchEvents">Search custom field</button>
+      <button class="secondary" :disabled="busy.events" @click="clearSearch">Clear</button>
+    </div>
+    <table>
+      <thead>
       <tr>
         <th>event_id</th>
         <th>event_type</th>
@@ -79,220 +85,248 @@
         <th>timestamp</th>
         <th>created_at</th>
       </tr>
-    </thead>
-    <tbody id="eventsBody"></tbody>
-  </table>
-</div>
+      </thead>
+      <tbody>
+      <tr v-if="events.length === 0">
+        <td colspan="5">No rows</td>
+      </tr>
+      <tr v-for="row in events" :key="row.event_id + ':' + row.created_at">
+        <td><code>{{ row.event_id || '' }}</code></td>
+        <td>{{ row.event_type || '' }}</td>
+        <td>{{ row.user_id || '' }}</td>
+        <td>{{ row.timestamp || '' }}</td>
+        <td>{{ row.created_at || '' }}</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
 
-<div class="card">
-  <h3>Record Storage (events_raw) - analytics playground</h3>
-  <div class="row">
-    <button id="genBatchBtn">Generate + save 1000 records</button>
-    <button id="simulateLoadBtn">Simulate load (10x1000)</button>
+  <div class="card">
+    <h3>Record Storage (events_raw) - analytics playground</h3>
+    <div class="row">
+      <button :disabled="busy.records" @click="generateBatch">Generate + save 1000 records</button>
+      <button :disabled="busy.records" @click="simulateLoad">Simulate load (10x1000)</button>
+    </div>
+    <div class="row" style="margin-top:8px;">
+      <input v-model="moderation.userId" placeholder="moderation userId" />
+      <input v-model="moderation.chatId" placeholder="chatId" />
+      <input v-model="moderation.messageId" placeholder="messageId" />
+      <select v-model="moderation.recordType">
+        <option value="">recordType...</option>
+        <option>MESSAGE</option>
+        <option>MODERATION</option>
+        <option>PURCHASE</option>
+        <option>SYSTEM</option>
+        <option>OTHER</option>
+      </select>
+      <input v-model.number="moderation.limit" type="number" min="1" max="500" />
+      <button :disabled="busy.records" @click="runModerationRead">Run moderation read</button>
+    </div>
+    <div class="row" style="margin-top:8px;">
+      <select v-model="analytics.scenario">
+        <option>events_by_type_timeseries</option>
+        <option>top_users_by_volume</option>
+        <option>flagged_users_spike</option>
+        <option>attrs_source_lang_breakdown</option>
+        <option>record_type_mix</option>
+      </select>
+      <input v-model="analytics.fromIso" placeholder="fromIso (optional)" style="min-width:220px;" />
+      <input v-model="analytics.toIso" placeholder="toIso (optional)" style="min-width:220px;" />
+      <input v-model.number="analytics.limit" type="number" min="1" max="5000" />
+      <button :disabled="busy.records" @click="runAnalyticsScenario">Run analytics scenario</button>
+    </div>
+    <pre style="max-height:320px;">{{ recordsResult }}</pre>
   </div>
-  <div class="row" style="margin-top:8px;">
-    <input id="moderationUserId" placeholder="moderation userId" />
-    <input id="moderationChatId" placeholder="chatId" />
-    <input id="moderationMessageId" placeholder="messageId" />
-    <select id="moderationRecordType" style="padding:8px;border:1px solid #ccc;border-radius:6px;">
-      <option value="">recordType...</option>
-      <option value="MESSAGE">MESSAGE</option>
-      <option value="MODERATION">MODERATION</option>
-      <option value="PURCHASE">PURCHASE</option>
-      <option value="SYSTEM">SYSTEM</option>
-      <option value="OTHER">OTHER</option>
-    </select>
-    <input id="moderationLimit" type="number" value="50" min="1" max="500" />
-    <button id="moderationBtn">Run moderation read</button>
-  </div>
-  <div class="row" style="margin-top:8px;">
-    <select id="analyticsScenario" style="padding:8px;border:1px solid #ccc;border-radius:6px;">
-      <option value="events_by_type_timeseries">events_by_type_timeseries</option>
-      <option value="top_users_by_volume">top_users_by_volume</option>
-      <option value="flagged_users_spike">flagged_users_spike</option>
-      <option value="attrs_source_lang_breakdown">attrs_source_lang_breakdown</option>
-      <option value="record_type_mix">record_type_mix</option>
-    </select>
-    <input id="analyticsFrom" placeholder="fromIso (optional)" style="min-width:220px;" />
-    <input id="analyticsTo" placeholder="toIso (optional)" style="min-width:220px;" />
-    <input id="analyticsLimit" type="number" value="200" min="1" max="5000" />
-    <button id="runAnalyticsBtn">Run analytics scenario</button>
-  </div>
-  <pre id="recordsResult" style="max-height:320px;overflow:auto;"></pre>
 </div>
 
 <script>
-  async function loadStatus() {
-    try {
-      const r = await fetch('/api/storage/status');
-      const j = await r.json();
-      document.getElementById('status').innerHTML =
-        'ClickHouse: ' + (j.clickhouseUp ? '<span class="ok">UP</span>' : '<span class="bad">DOWN</span>') +
-        ' | API: <span class="ok">UP</span>';
-    } catch (_) {
-      document.getElementById('status').innerHTML = 'API: <span class="bad">DOWN</span>';
-    }
-  }
+  const { createApp, reactive, ref, onMounted } = Vue;
 
-  async function loadEvents() {
-    const limit = document.getElementById('limit').value || 20;
-    const body = document.getElementById('eventsBody');
-    body.innerHTML = '';
-    try {
-      const r = await fetch('/api/storage/events?limit=' + encodeURIComponent(limit));
-      const rows = await r.json();
-      for (const row of rows) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = '<td><code>' + (row.event_id ?? '') + '</code></td>' +
-          '<td>' + (row.event_type ?? '') + '</td>' +
-          '<td>' + (row.user_id ?? '') + '</td>' +
-          '<td>' + (row.timestamp ?? '') + '</td>' +
-          '<td>' + (row.created_at ?? '') + '</td>';
-        body.appendChild(tr);
+  createApp({
+    setup() {
+      const infraLoaded = ref(false);
+      const status = reactive({ clickhouseUp: false });
+      const eventsLimit = ref(20);
+      const events = ref([]);
+      const sendResult = ref("");
+      const recordsResult = ref("");
+      const busy = reactive({ sendEvent: false, events: false, records: false });
+
+      const sendForm = reactive({
+        eventType: "ui_test_event",
+        userId: "user-ui",
+        recordType: "MESSAGE",
+        customFieldsJson: JSON.stringify({ sessionId: "sess-1", ipAddress: "127.0.0.1" }, null, 2)
+      });
+
+      const search = reactive({ field: "", value: "", recordType: "" });
+      const moderation = reactive({ userId: "", chatId: "", messageId: "", recordType: "", limit: 50 });
+      const analytics = reactive({ scenario: "events_by_type_timeseries", fromIso: "", toIso: "", limit: 200 });
+
+      async function fetchJson(url, options) {
+        const r = await fetch(url, options);
+        if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+        return await r.json();
       }
-    } catch (e) {
-      body.innerHTML = '<tr><td colspan="5">Failed to load events</td></tr>';
-    }
-  }
 
-  async function searchEvents() {
-    const field = (document.getElementById('searchField').value || '').trim();
-    const value = (document.getElementById('searchValue').value || '').trim();
-    const limit = document.getElementById('limit').value || 20;
-    const body = document.getElementById('eventsBody');
-    body.innerHTML = '';
-    if (!field) {
-      document.getElementById('sendResult').textContent = 'Search field is required';
-      return;
-    }
-    try {
-      const url = '/api/storage/search?field=' + encodeURIComponent(field) +
-        '&value=' + encodeURIComponent(value) +
-        '&limit=' + encodeURIComponent(limit);
-      const r = await fetch(url);
-      if (!r.ok) {
-        const t = await r.text();
-        throw new Error(t || ('HTTP ' + r.status));
+      async function loadStatus() {
+        try {
+          const j = await fetchJson("/api/storage/status");
+          status.clickhouseUp = !!j.clickhouseUp;
+          infraLoaded.value = true;
+        } catch (_) {
+          infraLoaded.value = true;
+          status.clickhouseUp = false;
+        }
       }
-      const rows = await r.json();
-      for (const row of rows) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = '<td><code>' + (row.event_id ?? '') + '</code></td>' +
-          '<td>' + (row.event_type ?? '') + '</td>' +
-          '<td>' + (row.user_id ?? '') + '</td>' +
-          '<td>' + (row.timestamp ?? '') + '</td>' +
-          '<td>' + (row.created_at ?? '') + '</td>';
-        body.appendChild(tr);
+
+      async function loadEvents() {
+        busy.events = true;
+        try {
+          events.value = await fetchJson(`/api/storage/events?limit=${encodeURIComponent(eventsLimit.value || 20)}`);
+        } catch (e) {
+          events.value = [];
+          sendResult.value = String(e);
+        } finally {
+          busy.events = false;
+        }
       }
-      if (rows.length === 0) {
-        body.innerHTML = '<tr><td colspan="5">No events matched custom field filter</td></tr>';
+
+      async function searchEvents() {
+        if (!search.field.trim()) {
+          sendResult.value = "Search field is required";
+          return;
+        }
+        busy.events = true;
+        try {
+          const url = `/api/storage/search?field=${encodeURIComponent(search.field.trim())}` +
+            `&value=${encodeURIComponent(search.value.trim())}` +
+            `&limit=${encodeURIComponent(eventsLimit.value || 20)}`;
+          events.value = await fetchJson(url);
+        } catch (e) {
+          events.value = [];
+          sendResult.value = String(e);
+        } finally {
+          busy.events = false;
+        }
       }
-    } catch (e) {
-      body.innerHTML = '<tr><td colspan="5">Search failed: ' + e + '</td></tr>';
-    }
-  }
 
-  async function sendEvent() {
-    const eventType = document.getElementById('eventType').value || 'ui_test_event';
-    const userId = document.getElementById('userId').value || 'user-ui';
-    const recordType = document.getElementById('recordType').value || 'OTHER';
-    const rawCustom = (document.getElementById('customFields').value || '').trim();
-    let custom = {};
-    if (rawCustom) {
-      try {
-        custom = JSON.parse(rawCustom);
-      } catch (e) {
-        document.getElementById('sendResult').textContent = 'Custom fields must be valid JSON: ' + e;
-        return;
+      async function searchByRecordType() {
+        if (!search.recordType) {
+          sendResult.value = "Select recordType";
+          return;
+        }
+        search.field = "recordType";
+        search.value = search.recordType;
+        await searchEvents();
       }
+
+      function clearSearch() {
+        search.field = "";
+        search.value = "";
+        search.recordType = "";
+        loadEvents();
+      }
+
+      async function sendEvent() {
+        busy.sendEvent = true;
+        try {
+          let custom = {};
+          const raw = (sendForm.customFieldsJson || "").trim();
+          if (raw) custom = JSON.parse(raw);
+          const payload = {
+            ...custom,
+            eventType: sendForm.eventType || "ui_test_event",
+            userId: sendForm.userId || "user-ui",
+            recordType: sendForm.recordType || "OTHER",
+            timestamp: new Date().toISOString()
+          };
+          const j = await fetchJson("/api/events/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          sendResult.value = JSON.stringify(j, null, 2);
+          await loadEvents();
+        } catch (e) {
+          sendResult.value = String(e);
+        } finally {
+          busy.sendEvent = false;
+        }
+      }
+
+      async function generateBatch() {
+        busy.records = true;
+        try {
+          const j = await fetchJson("/api/records/generate-and-save?count=1000", { method: "POST" });
+          recordsResult.value = JSON.stringify(j, null, 2);
+        } catch (e) {
+          recordsResult.value = String(e);
+        } finally {
+          busy.records = false;
+        }
+      }
+
+      async function simulateLoad() {
+        busy.records = true;
+        try {
+          const j = await fetchJson("/api/records/simulate-load?rounds=10&perRound=1000", { method: "POST" });
+          recordsResult.value = JSON.stringify(j, null, 2);
+        } catch (e) {
+          recordsResult.value = String(e);
+        } finally {
+          busy.records = false;
+        }
+      }
+
+      async function runModerationRead() {
+        busy.records = true;
+        try {
+          const p = new URLSearchParams();
+          if (moderation.userId.trim()) p.append("userId", moderation.userId.trim());
+          if (moderation.chatId.trim()) p.append("chatId", moderation.chatId.trim());
+          if (moderation.messageId.trim()) p.append("messageId", moderation.messageId.trim());
+          if (moderation.recordType.trim()) p.append("recordType", moderation.recordType.trim());
+          p.append("limit", String(moderation.limit || 50));
+          const j = await fetchJson(`/api/records/moderation?${p}`);
+          recordsResult.value = JSON.stringify(j, null, 2);
+        } catch (e) {
+          recordsResult.value = String(e);
+        } finally {
+          busy.records = false;
+        }
+      }
+
+      async function runAnalyticsScenario() {
+        busy.records = true;
+        try {
+          const p = new URLSearchParams();
+          p.append("scenario", analytics.scenario);
+          if (analytics.fromIso.trim()) p.append("fromIso", analytics.fromIso.trim());
+          if (analytics.toIso.trim()) p.append("toIso", analytics.toIso.trim());
+          p.append("limit", String(analytics.limit || 200));
+          const j = await fetchJson(`/api/records/analytics/run?${p}`);
+          recordsResult.value = JSON.stringify(j, null, 2);
+        } catch (e) {
+          recordsResult.value = String(e);
+        } finally {
+          busy.records = false;
+        }
+      }
+
+      onMounted(async () => {
+        await loadStatus();
+        await loadEvents();
+      });
+
+      return {
+        infraLoaded, status, eventsLimit, events, sendForm, search, moderation, analytics,
+        sendResult, recordsResult, busy,
+        loadEvents, searchEvents, searchByRecordType, clearSearch, sendEvent,
+        generateBatch, simulateLoad, runModerationRead, runAnalyticsScenario
+      };
     }
-    const payload = Object.assign({}, custom, {
-      eventType,
-      userId,
-      recordType,
-      timestamp: new Date().toISOString()
-    });
-    const r = await fetch('/api/events/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const j = await r.json();
-    document.getElementById('sendResult').textContent = JSON.stringify(j, null, 2);
-    await loadEvents();
-  }
-
-  async function generateBatch() {
-    const r = await fetch('/api/records/generate-and-save?count=1000', { method: 'POST' });
-    const j = await r.json();
-    document.getElementById('recordsResult').textContent = JSON.stringify(j, null, 2);
-  }
-
-  async function simulateLoad() {
-    const r = await fetch('/api/records/simulate-load?rounds=10&perRound=1000', { method: 'POST' });
-    const j = await r.json();
-    document.getElementById('recordsResult').textContent = JSON.stringify(j, null, 2);
-  }
-
-  async function runModerationRead() {
-    const userId = (document.getElementById('moderationUserId').value || '').trim();
-    const chatId = (document.getElementById('moderationChatId').value || '').trim();
-    const messageId = (document.getElementById('moderationMessageId').value || '').trim();
-    const recordType = (document.getElementById('moderationRecordType').value || '').trim();
-    const limit = document.getElementById('moderationLimit').value || 50;
-    const params = new URLSearchParams();
-    if (userId) params.append('userId', userId);
-    if (chatId) params.append('chatId', chatId);
-    if (messageId) params.append('messageId', messageId);
-    if (recordType) params.append('recordType', recordType);
-    params.append('limit', String(limit));
-    const r = await fetch('/api/records/moderation?' + params.toString());
-    const j = await r.json();
-    document.getElementById('recordsResult').textContent = JSON.stringify(j, null, 2);
-  }
-
-  async function searchByRecordType() {
-    const recordType = (document.getElementById('recordTypeSearch').value || '').trim();
-    if (!recordType) {
-      document.getElementById('sendResult').textContent = 'Select recordType';
-      return;
-    }
-    document.getElementById('searchField').value = 'recordType';
-    document.getElementById('searchValue').value = recordType;
-    await searchEvents();
-  }
-
-  async function runAnalyticsScenario() {
-    const scenario = document.getElementById('analyticsScenario').value;
-    const fromIso = (document.getElementById('analyticsFrom').value || '').trim();
-    const toIso = (document.getElementById('analyticsTo').value || '').trim();
-    const limit = document.getElementById('analyticsLimit').value || 200;
-    const params = new URLSearchParams();
-    params.append('scenario', scenario);
-    if (fromIso) params.append('fromIso', fromIso);
-    if (toIso) params.append('toIso', toIso);
-    params.append('limit', String(limit));
-    const r = await fetch('/api/records/analytics/run?' + params.toString());
-    const j = await r.json();
-    document.getElementById('recordsResult').textContent = JSON.stringify(j, null, 2);
-  }
-
-  document.getElementById('refreshBtn').addEventListener('click', loadEvents);
-  document.getElementById('sendBtn').addEventListener('click', sendEvent);
-  document.getElementById('searchBtn').addEventListener('click', searchEvents);
-  document.getElementById('searchRecordTypeBtn').addEventListener('click', searchByRecordType);
-  document.getElementById('clearSearchBtn').addEventListener('click', () => {
-    document.getElementById('searchField').value = '';
-    document.getElementById('searchValue').value = '';
-    loadEvents();
-  });
-  document.getElementById('genBatchBtn').addEventListener('click', generateBatch);
-  document.getElementById('simulateLoadBtn').addEventListener('click', simulateLoad);
-  document.getElementById('moderationBtn').addEventListener('click', runModerationRead);
-  document.getElementById('runAnalyticsBtn').addEventListener('click', runAnalyticsScenario);
-
-  loadStatus();
-  loadEvents();
+  }).mount("#app");
 </script>
 </body>
 </html>

@@ -32,11 +32,22 @@ cd event-storage
 ## Endpoints
 
 - Event API: `http://localhost:8081`
-- Storage UI: `http://localhost:8081`
+- Storage UI (legacy static): `http://localhost:8081`
+- Storage UI (Vue standalone, no Docker): `http://localhost:5173`
 - Kafka UI: `http://localhost:8080`
 - ClickHouse HTTP: `http://localhost:8123`
 - Prometheus: `http://localhost:9090`
 - Grafana: `http://localhost:3000` (`admin/admin`)
+
+## Frontend (standalone, no Docker)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Vite dev server proxies `/api` and `/actuator` to `http://localhost:8081`.
 
 ## Smoke test
 

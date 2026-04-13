@@ -8,6 +8,7 @@ import one.idsstorage.domain.Record;
 import one.idsstorage.repository.RecordQueryService;
 import one.idsstorage.repository.RecordRepository;
 import one.idsstorage.service.RecordDataGenerator;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
@@ -41,25 +43,39 @@ public class RecordStorageController {
 
     @PostMapping("/save-batch")
     public ResponseEntity<Map<String, Object>> saveBatch(@RequestBody List<Record> records) {
-        recordRepository.saveAll(records);
+        try {
+            recordRepository.saveAll(records);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("status", "error", "message", e.getMessage()));
+        }
         return ResponseEntity.ok(Map.of("status", "ok", "written", records == null ? 0 : records.size()));
     }
 
     @GetMapping("/moderation")
     public ResponseEntity<List<Record>> findForModeration(
-            @RequestParam(required = false) Long userId,
-            @RequestParam(required = false) Long chatId,
-            @RequestParam(required = false) Long messageId,
             @RequestParam(required = false) String recordType,
             @RequestParam(defaultValue = "100") int limit
     ) {
         ModerationFilter f = new ModerationFilter();
-        f.setUserId(userId);
-        f.setChatId(chatId);
-        f.setMessageId(messageId);
         f.setRecordType(recordType);
         f.setLimit(limit);
         return ResponseEntity.ok(recordQueryService.findForModeration(f));
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<List<Record>> search(@RequestBody Map<String, Object> body) {
+        int limit = asInt(body == null ? null : body.get("limit"), 100);
+        Map<String, String> filters = new LinkedHashMap<>();
+        if (body != null && body.get("filters") instanceof Map<?, ?> rawFilters) {
+            for (Map.Entry<?, ?> e : rawFilters.entrySet()) {
+                if (e.getKey() == null || e.getValue() == null) {
+                    continue;
+                }
+                filters.put(String.valueOf(e.getKey()), String.valueOf(e.getValue()));
+            }
+        }
+        return ResponseEntity.ok(recordQueryService.search(filters, limit));
     }
 
     @GetMapping("/analytics")
@@ -153,5 +169,19 @@ public class RecordStorageController {
     @PostMapping("/hot-attributes/apply")
     public ResponseEntity<Map<String, Object>> hotAttributesApply() {
         return ResponseEntity.ok(hotAttributeManager.applyAll());
+    }
+
+    private int asInt(Object raw, int fallback) {
+        if (raw == null) {
+            return fallback;
+        }
+        if (raw instanceof Number n) {
+            return n.intValue();
+        }
+        try {
+            return Integer.parseInt(String.valueOf(raw));
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
     }
 }
