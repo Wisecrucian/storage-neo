@@ -11,6 +11,7 @@ services:
       - clickhouse_data:/var/lib/clickhouse
       - clickhouse_logs:/var/log/clickhouse-server
       - ./users.d:/etc/clickhouse-server/users.d
+      - ./init.d:/docker-entrypoint-initdb.d:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ulimits:

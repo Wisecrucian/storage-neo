@@ -1,0 +1,290 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 200,
+      "title": "Mixed Workload (Write + Point Read + Analytical Read)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [
+        { "matcher": { "id": "byName", "options": "writes (batches/s)" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+        { "matcher": { "id": "byName", "options": "point reads/s" }, "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }] },
+        { "matcher": { "id": "byName", "options": "analytical reads/s" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] }
+      ] },
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 1 },
+      "id": 1,
+      "targets": [
+        { "expr": "sum(rate(writes_success_total[1m]))", "legendFormat": "writes (batches/s)", "refId": "A" },
+        { "expr": "sum(rate(read_requests_total{read_type=\"moderation\"}[1m]))", "legendFormat": "point reads/s", "refId": "B" },
+        { "expr": "sum(rate(read_requests_total{read_type=\"analytics\"}[1m]))", "legendFormat": "analytical reads/s", "refId": "C" }
+      ],
+      "title": "Все операции (overlay)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [
+        { "matcher": { "id": "byName", "options": "write p50" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+        { "matcher": { "id": "byName", "options": "point read p50" }, "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }] },
+        { "matcher": { "id": "byName", "options": "analytical read p50" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] }
+      ] },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 1 },
+      "id": 2,
+      "targets": [
+        { "expr": "write_latency_ms_seconds{quantile=\"0.5\"} * 1000", "legendFormat": "write p50", "refId": "A" },
+        { "expr": "read_latency_ms_seconds{read_type=\"moderation\",quantile=\"0.5\"} * 1000", "legendFormat": "point read p50", "refId": "B" },
+        { "expr": "read_latency_ms_seconds{read_type=\"analytics\",quantile=\"0.5\"} * 1000", "legendFormat": "analytical read p50", "refId": "C" }
+      ],
+      "title": "Latency p50: все операции (overlay)",
+      "type": "timeseries"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "id": 201,
+      "title": "Write Performance",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 15 } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 10 },
+      "id": 10,
+      "targets": [
+        { "expr": "sum(rate(records_written_total[1m]))", "legendFormat": "records/s", "refId": "A" }
+      ],
+      "title": "Write Throughput (records/s)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 10 },
+      "id": 11,
+      "targets": [
+        { "expr": "write_latency_ms_seconds{quantile=\"0.5\"} * 1000", "legendFormat": "p50", "refId": "A" },
+        { "expr": "write_latency_ms_seconds{quantile=\"0.95\"} * 1000", "legendFormat": "p95", "refId": "B" },
+        { "expr": "write_latency_ms_seconds{quantile=\"0.99\"} * 1000", "legendFormat": "p99", "refId": "C" }
+      ],
+      "title": "Write Latency (p50 / p95 / p99)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 10 },
+      "id": 12,
+      "targets": [
+        { "expr": "sum(rate(records_written_by_record_type_total[1m])) by (record_type)", "legendFormat": "{{record_type}}", "refId": "A" }
+      ],
+      "title": "Write by Record Type",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 17 },
+      "id": 13,
+      "targets": [
+        { "expr": "batch_flush_latency_seconds{quantile=\"0.5\"} * 1000", "legendFormat": "flush p50", "refId": "A" },
+        { "expr": "batch_flush_latency_seconds{quantile=\"0.95\"} * 1000", "legendFormat": "flush p95", "refId": "B" },
+        { "expr": "batch_flush_latency_seconds{quantile=\"0.99\"} * 1000", "legendFormat": "flush p99", "refId": "C" }
+      ],
+      "title": "Batch Flush Latency (p50 / p95 / p99)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 17 },
+      "id": 14,
+      "targets": [
+        { "expr": "batch_size{quantile=\"0.5\"}", "legendFormat": "batch size p50", "refId": "A" },
+        { "expr": "batch_queue_size", "legendFormat": "queue size", "refId": "B" }
+      ],
+      "title": "Batch Size & Queue",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 17 },
+      "id": 15,
+      "targets": [
+        { "expr": "sum(rate(writes_success_total[1m]))", "legendFormat": "success/s", "refId": "A" },
+        { "expr": "sum(rate(writes_failed_total[1m]))", "legendFormat": "failures/s", "refId": "B" }
+      ],
+      "title": "Batch Outcomes (success / failure)",
+      "type": "timeseries"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 24 },
+      "id": 202,
+      "title": "Read Performance",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [
+        { "matcher": { "id": "byName", "options": "точечные" }, "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }] },
+        { "matcher": { "id": "byName", "options": "аналитические" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] }
+      ] },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 25 },
+      "id": 20,
+      "targets": [
+        { "expr": "sum(rate(read_requests_total{read_type=\"moderation\"}[1m]))", "legendFormat": "точечные", "refId": "A" },
+        { "expr": "sum(rate(read_requests_total{read_type=\"analytics\"}[1m]))", "legendFormat": "аналитические", "refId": "B" }
+      ],
+      "title": "Read Requests / sec по паттерну",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [
+        { "matcher": { "id": "byName", "options": "точечные p50" }, "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }] },
+        { "matcher": { "id": "byName", "options": "точечные p95" }, "properties": [{ "id": "color", "value": { "fixedColor": "semi-dark-blue", "mode": "fixed" } }] },
+        { "matcher": { "id": "byName", "options": "аналитические p50" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] },
+        { "matcher": { "id": "byName", "options": "аналитические p95" }, "properties": [{ "id": "color", "value": { "fixedColor": "dark-orange", "mode": "fixed" } }] }
+      ] },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 25 },
+      "id": 21,
+      "targets": [
+        { "expr": "read_latency_ms_seconds{read_type=\"moderation\",quantile=\"0.5\"} * 1000", "legendFormat": "точечные p50", "refId": "A" },
+        { "expr": "read_latency_ms_seconds{read_type=\"moderation\",quantile=\"0.95\"} * 1000", "legendFormat": "точечные p95", "refId": "B" },
+        { "expr": "read_latency_ms_seconds{read_type=\"analytics\",quantile=\"0.5\"} * 1000", "legendFormat": "аналитические p50", "refId": "C" },
+        { "expr": "read_latency_ms_seconds{read_type=\"analytics\",quantile=\"0.95\"} * 1000", "legendFormat": "аналитические p95", "refId": "D" }
+      ],
+      "title": "Read Latency: точечные vs аналитические (p50 / p95)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "custom": { "lineWidth": 2, "fillOpacity": 10 }, "thresholds": { "mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 0.01}] } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 25 },
+      "id": 22,
+      "targets": [
+        { "expr": "sum(rate(writes_failed_total[1m])) / clamp_min(sum(rate(writes_success_total[1m])) + sum(rate(writes_failed_total[1m])), 1e-9)", "legendFormat": "write error rate", "refId": "A" }
+      ],
+      "title": "Write Error Rate %",
+      "type": "timeseries"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 32 },
+      "id": 203,
+      "title": "ClickHouse Storage",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "lineWidth": 2, "fillOpacity": 15 } }, "overrides": [
+        { "matcher": { "id": "byName", "options": "uncompressed" }, "properties": [{ "id": "color", "value": { "fixedColor": "light-red", "mode": "fixed" } }] },
+        { "matcher": { "id": "byName", "options": "compressed (on disk)" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] }
+      ] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 33 },
+      "id": 30,
+      "targets": [
+        { "expr": "ch_storage_uncompressed_bytes", "legendFormat": "uncompressed", "refId": "A" },
+        { "expr": "ch_storage_compressed_bytes", "legendFormat": "compressed (on disk)", "refId": "B" }
+      ],
+      "title": "Storage: сжатый vs несжатый размер",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 2 }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 4, "x": 12, "y": 33 },
+      "id": 31,
+      "options": { "graphMode": "area", "textMode": "value_and_name", "colorMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "ch_storage_uncompressed_bytes / clamp_min(ch_storage_compressed_bytes, 1)", "legendFormat": "ratio", "refId": "A" }
+      ],
+      "title": "Степень сжатия (×)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 4, "x": 16, "y": 33 },
+      "id": 32,
+      "options": { "graphMode": "area", "textMode": "value_and_name", "colorMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "ch_storage_active_parts", "legendFormat": "parts", "refId": "A" }
+      ],
+      "title": "Active Parts",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 4, "x": 20, "y": 33 },
+      "id": 33,
+      "options": { "graphMode": "area", "textMode": "value_and_name", "colorMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "ch_storage_total_rows", "legendFormat": "rows", "refId": "A" }
+      ],
+      "title": "Total Rows in CH",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "lineWidth": 2, "fillOpacity": 15 } }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 41 },
+      "id": 34,
+      "targets": [
+        { "expr": "ch_projection_compressed_bytes", "legendFormat": "{{projection}} on disk", "refId": "A" },
+        { "expr": "ch_projection_uncompressed_bytes", "legendFormat": "{{projection}} raw", "refId": "B" }
+      ],
+      "title": "Projection Size by Name (on disk / raw)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 2, "custom": { "lineWidth": 2, "fillOpacity": 12 } }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 41 },
+      "id": 35,
+      "targets": [
+        {
+          "expr": "ch_projection_uncompressed_bytes / clamp_min(ch_projection_compressed_bytes, 1)",
+          "legendFormat": "{{projection}} ratio",
+          "refId": "A"
+        }
+      ],
+      "title": "Projection Compression Ratio by Name",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 12 } }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 41 },
+      "id": 36,
+      "targets": [
+        { "expr": "ch_projection_parts", "legendFormat": "{{projection}} parts", "refId": "A" },
+        { "expr": "ch_projection_rows", "legendFormat": "{{projection}} rows", "refId": "B" }
+      ],
+      "title": "Projection Rows / Parts by Name",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["event-storage", "benchmark", "clickhouse"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "timezone": "",
+  "title": "Event Storage Benchmark",
+  "uid": "event-storage-records",
+  "version": 4,
+  "weekStart": ""
+}

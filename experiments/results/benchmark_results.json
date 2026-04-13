@@ -1,0 +1,88 @@
+{
+  "benchmark_runs": [
+    {
+      "write": {
+        "threads": 1,
+        "duration_sec": 120,
+        "requests_ok": 66,
+        "requests_fail": 0,
+        "total_records": 660000,
+        "throughput_rec_per_sec": 5500.0,
+        "lat_ms_p50": 2016.0,
+        "lat_ms_p95": 3177.5,
+        "lat_ms_p99": 4982.4
+      },
+      "read_after": {
+        "moderation_ms": 423.8,
+        "moderation_rows": 10,
+        "analytics_ms": 1342.5
+      }
+    },
+    {
+      "write": {
+        "threads": 4,
+        "duration_sec": 120,
+        "requests_ok": 360,
+        "requests_fail": 0,
+        "total_records": 3600000,
+        "throughput_rec_per_sec": 30000.0,
+        "lat_ms_p50": 1124.4,
+        "lat_ms_p95": 3442.8,
+        "lat_ms_p99": 3923.0
+      },
+      "read_after": {
+        "moderation_ms": 64.4,
+        "moderation_rows": 10,
+        "analytics_ms": 69.6
+      }
+    },
+    {
+      "write": {
+        "threads": 8,
+        "duration_sec": 120,
+        "requests_ok": 486,
+        "requests_fail": 0,
+        "total_records": 4860000,
+        "throughput_rec_per_sec": 40500.0,
+        "lat_ms_p50": 1870.9,
+        "lat_ms_p95": 3286.2,
+        "lat_ms_p99": 4143.8
+      },
+      "read_after": {
+        "moderation_ms": 213.1,
+        "moderation_rows": 10,
+        "analytics_ms": 124.9
+      }
+    },
+    {
+      "write": {
+        "threads": 12,
+        "duration_sec": 120,
+        "requests_ok": 426,
+        "requests_fail": 0,
+        "total_records": 4260000,
+        "throughput_rec_per_sec": 35500.0,
+        "lat_ms_p50": 3196.7,
+        "lat_ms_p95": 5325.0,
+        "lat_ms_p99": 6953.1
+      },
+      "read_after": {
+        "moderation_ms": 116.5,
+        "moderation_rows": 10,
+        "analytics_ms": 94.7
+      }
+    }
+  ],
+  "ch_storage_stats": {
+    "total_rows": 31400200,
+    "disk_bytes": 8146498369,
+    "uncompressed_bytes": 8472393267,
+    "compressed_bytes": 4145772107,
+    "active_parts": 14,
+    "compression_ratio": 2.04,
+    "disk_mb": 7769.1,
+    "uncompressed_mb": 8079.9,
+    "bytes_per_row_compressed": 132.0,
+    "bytes_per_row_uncompressed": 269.8
+  }
+}

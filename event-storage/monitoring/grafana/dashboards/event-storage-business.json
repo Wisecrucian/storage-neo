@@ -1,0 +1,147 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Обзор потока записей",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 15 } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 1 },
+      "id": 1,
+      "targets": [
+        { "expr": "sum(rate(records_written_total[1m]))", "legendFormat": "records/s", "refId": "A" }
+      ],
+      "title": "Records Written / sec",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none" }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 1 },
+      "id": 2,
+      "options": { "pieType": "donut", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "sum(increase(records_written_by_record_type_total[5m])) by (record_type)", "legendFormat": "{{record_type}}", "refId": "A" }
+      ],
+      "title": "Распределение по типам записей (5m)",
+      "type": "piechart"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 1 },
+      "id": 3,
+      "options": { "graphMode": "area", "textMode": "value_and_name", "colorMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "sum(records_written_total)", "legendFormat": "total records", "refId": "A" }
+      ],
+      "title": "Всего записей",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 8 },
+      "id": 4,
+      "targets": [
+        { "expr": "sum(increase(records_written_total[1m]))", "legendFormat": "records/min", "refId": "A" }
+      ],
+      "title": "Записей в минуту (тренд)",
+      "type": "timeseries"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 15 },
+      "id": 101,
+      "title": "Записи по типам (детализация)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 10, "stacking": { "mode": "normal" } } }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "id": 5,
+      "targets": [
+        { "expr": "sum(rate(records_written_by_record_type_total[1m])) by (record_type)", "legendFormat": "{{record_type}}", "refId": "A" }
+      ],
+      "title": "Скорость записи по типам (stacked)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "custom": { "lineWidth": 2, "fillOpacity": 30, "stacking": { "mode": "percent" } } }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "id": 6,
+      "targets": [
+        { "expr": "sum(rate(records_written_by_record_type_total[1m])) by (record_type)", "legendFormat": "{{record_type}}", "refId": "A" }
+      ],
+      "title": "Доли типов записей (% stacked)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 5, "w": 24, "x": 0, "y": 24 },
+      "id": 7,
+      "options": { "graphMode": "none", "textMode": "value_and_name", "colorMode": "background", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "sum(rate(records_written_by_record_type_total[1m])) by (record_type)", "legendFormat": "{{record_type}}", "refId": "A" }
+      ],
+      "title": "Текущая скорость по каждому типу (rec/s)",
+      "type": "stat"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 },
+      "id": 102,
+      "title": "Чтения",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 15 } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 30 },
+      "id": 8,
+      "targets": [
+        { "expr": "sum(rate(read_requests_total[1m]))", "legendFormat": "reads/s", "refId": "A" }
+      ],
+      "title": "Чтений / sec (всего)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit", "min": 0, "max": 1, "thresholds": { "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.15}, {"color": "red", "value": 0.3}] } },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 30 },
+      "id": 9,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "sum(rate(read_requests_total[1m])) / clamp_min(sum(rate(read_requests_total[1m])) + sum(rate(writes_success_total[1m])), 1e-9)", "legendFormat": "read share", "refId": "A" }
+      ],
+      "title": "Доля чтений (read / total)",
+      "type": "gauge"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["event-storage", "business"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" },
+  "timezone": "",
+  "title": "Event Storage Business",
+  "uid": "event-storage-business",
+  "version": 4,
+  "weekStart": ""
+}

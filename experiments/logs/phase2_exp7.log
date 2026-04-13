@@ -1,0 +1,3 @@
+PREFLIGHT FAILED:
+  Java API unreachable: HTTP Error 503: 
+  save-batch HTTP 500: b'{"timestamp":"2026-04-03T18:52:29.536+00:00","status":500,"error":"Internal Server Error","path":"/api/records/save-batch"}'

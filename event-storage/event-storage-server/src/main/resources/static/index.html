@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Event Storage UI</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; background: #f7f7f9; color: #222; }
+    .card { background: #fff; padding: 16px; border-radius: 8px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    input, button { padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+    button { cursor: pointer; background: #2563eb; color: #fff; border: none; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
+    .ok { color: #15803d; }
+    .bad { color: #b91c1c; }
+    code { background: #eef2ff; padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+<h2>Event Storage UI</h2>
+
+<div class="card">
+  <h3>Infra status</h3>
+  <div id="status">Loading...</div>
+</div>
+
+<div class="card">
+  <h3>Send event</h3>
+  <div class="row">
+    <input id="eventType" placeholder="eventType" value="ui_test_event" />
+    <input id="userId" placeholder="userId" value="user-ui" />
+    <select id="recordType" style="padding:8px;border:1px solid #ccc;border-radius:6px;">
+      <option value="MESSAGE">MESSAGE</option>
+      <option value="MODERATION">MODERATION</option>
+      <option value="PURCHASE">PURCHASE</option>
+      <option value="SYSTEM">SYSTEM</option>
+      <option value="OTHER">OTHER</option>
+    </select>
+    <button id="sendBtn">Send</button>
+  </div>
+  <p>Custom fields JSON (optional):</p>
+  <textarea id="customFields" rows="6" style="width:100%;border:1px solid #ccc;border-radius:6px;padding:8px;">
+{
+  "sessionId": "sess-1",
+  "ipAddress": "127.0.0.1"
+}
+  </textarea>
+  <pre id="sendResult"></pre>
+</div>
+
+<div class="card">
+  <h3>Latest events from ClickHouse</h3>
+  <div class="row">
+    <input id="limit" type="number" value="20" min="1" max="200" />
+    <button id="refreshBtn">Refresh</button>
+  </div>
+  <div class="row" style="margin-top:8px;">
+    <input id="searchField" placeholder="custom field (e.g. sessionId or nested.key)" style="min-width:320px;" />
+    <input id="searchValue" placeholder="value" style="min-width:240px;" />
+    <select id="recordTypeSearch" style="padding:8px;border:1px solid #ccc;border-radius:6px;">
+      <option value="">recordType...</option>
+      <option value="MESSAGE">MESSAGE</option>
+      <option value="MODERATION">MODERATION</option>
+      <option value="PURCHASE">PURCHASE</option>
+      <option value="SYSTEM">SYSTEM</option>
+      <option value="OTHER">OTHER</option>
+    </select>
+    <button id="searchRecordTypeBtn">Search recordType</button>
+    <button id="searchBtn">Search custom field</button>
+    <button id="clearSearchBtn" style="background:#4b5563;">Clear search</button>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>event_id</th>
+        <th>event_type</th>
+        <th>user_id</th>
+        <th>timestamp</th>
+        <th>created_at</th>
+      </tr>
+    </thead>
+    <tbody id="eventsBody"></tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h3>Record Storage (events_raw) - analytics playground</h3>
+  <div class="row">
+    <button id="genBatchBtn">Generate + save 1000 records</button>
+    <button id="simulateLoadBtn">Simulate load (10x1000)</button>
+  </div>
+  <div class="row" style="margin-top:8px;">
+    <input id="moderationUserId" placeholder="moderation userId" />
+    <input id="moderationChatId" placeholder="chatId" />
+    <input id="moderationMessageId" placeholder="messageId" />
+    <select id="moderationRecordType" style="padding:8px;border:1px solid #ccc;border-radius:6px;">
+      <option value="">recordType...</option>
+      <option value="MESSAGE">MESSAGE</option>
+      <option value="MODERATION">MODERATION</option>
+      <option value="PURCHASE">PURCHASE</option>
+      <option value="SYSTEM">SYSTEM</option>
+      <option value="OTHER">OTHER</option>
+    </select>
+    <input id="moderationLimit" type="number" value="50" min="1" max="500" />
+    <button id="moderationBtn">Run moderation read</button>
+  </div>
+  <div class="row" style="margin-top:8px;">
+    <select id="analyticsScenario" style="padding:8px;border:1px solid #ccc;border-radius:6px;">
+      <option value="events_by_type_timeseries">events_by_type_timeseries</option>
+      <option value="top_users_by_volume">top_users_by_volume</option>
+      <option value="flagged_users_spike">flagged_users_spike</option>
+      <option value="attrs_source_lang_breakdown">attrs_source_lang_breakdown</option>
+      <option value="record_type_mix">record_type_mix</option>
+    </select>
+    <input id="analyticsFrom" placeholder="fromIso (optional)" style="min-width:220px;" />
+    <input id="analyticsTo" placeholder="toIso (optional)" style="min-width:220px;" />
+    <input id="analyticsLimit" type="number" value="200" min="1" max="5000" />
+    <button id="runAnalyticsBtn">Run analytics scenario</button>
+  </div>
+  <pre id="recordsResult" style="max-height:320px;overflow:auto;"></pre>
+</div>
+
+<script>
+  async function loadStatus() {
+    try {
+      const r = await fetch('/api/storage/status');
+      const j = await r.json();
+      document.getElementById('status').innerHTML =
+        'ClickHouse: ' + (j.clickhouseUp ? '<span class="ok">UP</span>' : '<span class="bad">DOWN</span>') +
+        ' | API: <span class="ok">UP</span>';
+    } catch (_) {
+      document.getElementById('status').innerHTML = 'API: <span class="bad">DOWN</span>';
+    }
+  }
+
+  async function loadEvents() {
+    const limit = document.getElementById('limit').value || 20;
+    const body = document.getElementById('eventsBody');
+    body.innerHTML = '';
+    try {
+      const r = await fetch('/api/storage/events?limit=' + encodeURIComponent(limit));
+      const rows = await r.json();
+      for (const row of rows) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td><code>' + (row.event_id ?? '') + '</code></td>' +
+          '<td>' + (row.event_type ?? '') + '</td>' +
+          '<td>' + (row.user_id ?? '') + '</td>' +
+          '<td>' + (row.timestamp ?? '') + '</td>' +
+          '<td>' + (row.created_at ?? '') + '</td>';
+        body.appendChild(tr);
+      }
+    } catch (e) {
+      body.innerHTML = '<tr><td colspan="5">Failed to load events</td></tr>';
+    }
+  }
+
+  async function searchEvents() {
+    const field = (document.getElementById('searchField').value || '').trim();
+    const value = (document.getElementById('searchValue').value || '').trim();
+    const limit = document.getElementById('limit').value || 20;
+    const body = document.getElementById('eventsBody');
+    body.innerHTML = '';
+    if (!field) {
+      document.getElementById('sendResult').textContent = 'Search field is required';
+      return;
+    }
+    try {
+      const url = '/api/storage/search?field=' + encodeURIComponent(field) +
+        '&value=' + encodeURIComponent(value) +
+        '&limit=' + encodeURIComponent(limit);
+      const r = await fetch(url);
+      if (!r.ok) {
+        const t = await r.text();
+        throw new Error(t || ('HTTP ' + r.status));
+      }
+      const rows = await r.json();
+      for (const row of rows) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td><code>' + (row.event_id ?? '') + '</code></td>' +
+          '<td>' + (row.event_type ?? '') + '</td>' +
+          '<td>' + (row.user_id ?? '') + '</td>' +
+          '<td>' + (row.timestamp ?? '') + '</td>' +
+          '<td>' + (row.created_at ?? '') + '</td>';
+        body.appendChild(tr);
+      }
+      if (rows.length === 0) {
+        body.innerHTML = '<tr><td colspan="5">No events matched custom field filter</td></tr>';
+      }
+    } catch (e) {
+      body.innerHTML = '<tr><td colspan="5">Search failed: ' + e + '</td></tr>';
+    }
+  }
+
+  async function sendEvent() {
+    const eventType = document.getElementById('eventType').value || 'ui_test_event';
+    const userId = document.getElementById('userId').value || 'user-ui';
+    const recordType = document.getElementById('recordType').value || 'OTHER';
+    const rawCustom = (document.getElementById('customFields').value || '').trim();
+    let custom = {};
+    if (rawCustom) {
+      try {
+        custom = JSON.parse(rawCustom);
+      } catch (e) {
+        document.getElementById('sendResult').textContent = 'Custom fields must be valid JSON: ' + e;
+        return;
+      }
+    }
+    const payload = Object.assign({}, custom, {
+      eventType,
+      userId,
+      recordType,
+      timestamp: new Date().toISOString()
+    });
+    const r = await fetch('/api/events/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const j = await r.json();
+    document.getElementById('sendResult').textContent = JSON.stringify(j, null, 2);
+    await loadEvents();
+  }
+
+  async function generateBatch() {
+    const r = await fetch('/api/records/generate-and-save?count=1000', { method: 'POST' });
+    const j = await r.json();
+    document.getElementById('recordsResult').textContent = JSON.stringify(j, null, 2);
+  }
+
+  async function simulateLoad() {
+    const r = await fetch('/api/records/simulate-load?rounds=10&perRound=1000', { method: 'POST' });
+    const j = await r.json();
+    document.getElementById('recordsResult').textContent = JSON.stringify(j, null, 2);
+  }
+
+  async function runModerationRead() {
+    const userId = (document.getElementById('moderationUserId').value || '').trim();
+    const chatId = (document.getElementById('moderationChatId').value || '').trim();
+    const messageId = (document.getElementById('moderationMessageId').value || '').trim();
+    const recordType = (document.getElementById('moderationRecordType').value || '').trim();
+    const limit = document.getElementById('moderationLimit').value || 50;
+    const params = new URLSearchParams();
+    if (userId) params.append('userId', userId);
+    if (chatId) params.append('chatId', chatId);
+    if (messageId) params.append('messageId', messageId);
+    if (recordType) params.append('recordType', recordType);
+    params.append('limit', String(limit));
+    const r = await fetch('/api/records/moderation?' + params.toString());
+    const j = await r.json();
+    document.getElementById('recordsResult').textContent = JSON.stringify(j, null, 2);
+  }
+
+  async function searchByRecordType() {
+    const recordType = (document.getElementById('recordTypeSearch').value || '').trim();
+    if (!recordType) {
+      document.getElementById('sendResult').textContent = 'Select recordType';
+      return;
+    }
+    document.getElementById('searchField').value = 'recordType';
+    document.getElementById('searchValue').value = recordType;
+    await searchEvents();
+  }
+
+  async function runAnalyticsScenario() {
+    const scenario = document.getElementById('analyticsScenario').value;
+    const fromIso = (document.getElementById('analyticsFrom').value || '').trim();
+    const toIso = (document.getElementById('analyticsTo').value || '').trim();
+    const limit = document.getElementById('analyticsLimit').value || 200;
+    const params = new URLSearchParams();
+    params.append('scenario', scenario);
+    if (fromIso) params.append('fromIso', fromIso);
+    if (toIso) params.append('toIso', toIso);
+    params.append('limit', String(limit));
+    const r = await fetch('/api/records/analytics/run?' + params.toString());
+    const j = await r.json();
+    document.getElementById('recordsResult').textContent = JSON.stringify(j, null, 2);
+  }
+
+  document.getElementById('refreshBtn').addEventListener('click', loadEvents);
+  document.getElementById('sendBtn').addEventListener('click', sendEvent);
+  document.getElementById('searchBtn').addEventListener('click', searchEvents);
+  document.getElementById('searchRecordTypeBtn').addEventListener('click', searchByRecordType);
+  document.getElementById('clearSearchBtn').addEventListener('click', () => {
+    document.getElementById('searchField').value = '';
+    document.getElementById('searchValue').value = '';
+    loadEvents();
+  });
+  document.getElementById('genBatchBtn').addEventListener('click', generateBatch);
+  document.getElementById('simulateLoadBtn').addEventListener('click', simulateLoad);
+  document.getElementById('moderationBtn').addEventListener('click', runModerationRead);
+  document.getElementById('runAnalyticsBtn').addEventListener('click', runAnalyticsScenario);
+
+  loadStatus();
+  loadEvents();
+</script>
+</body>
+</html>

@@ -1,0 +1,570 @@
+{
+  "started": "2026-04-03T16:49:17Z",
+  "calibration": [
+    {
+      "threads": 1,
+      "rec_s": 13645.0,
+      "written": 546000,
+      "http_errors": 0
+    },
+    {
+      "threads": 2,
+      "rec_s": 18274.0,
+      "written": 734000,
+      "http_errors": 0
+    },
+    {
+      "threads": 3,
+      "rec_s": 17680.0,
+      "written": 712000,
+      "http_errors": 0
+    },
+    {
+      "threads": 4,
+      "rec_s": 17208.0,
+      "written": 692000,
+      "http_errors": 0
+    }
+  ],
+  "exp1_read_degradation": {
+    "calibration": [
+      {
+        "threads": 1,
+        "rec_s": 13645.0,
+        "written": 546000,
+        "http_errors": 0
+      },
+      {
+        "threads": 2,
+        "rec_s": 18274.0,
+        "written": 734000,
+        "http_errors": 0
+      },
+      {
+        "threads": 3,
+        "rec_s": 17680.0,
+        "written": 712000,
+        "http_errors": 0
+      },
+      {
+        "threads": 4,
+        "rec_s": 17208.0,
+        "written": 692000,
+        "http_errors": 0
+      }
+    ],
+    "throttle_plan": [
+      {
+        "target": 5000,
+        "threads": 2,
+        "sleep_sec": 0.5967,
+        "calibration_achieved_rec_s": 5192.0
+      },
+      {
+        "target": 10000,
+        "threads": 4,
+        "sleep_sec": 0.5637,
+        "calibration_achieved_rec_s": 10044.0
+      },
+      {
+        "target": 15000,
+        "threads": 4,
+        "sleep_sec": 0.0635,
+        "calibration_achieved_rec_s": 14966.0
+      },
+      {
+        "target": 20000,
+        "threads": 4,
+        "sleep_sec": 0.0025,
+        "calibration_achieved_rec_s": 16101.0
+      }
+    ],
+    "rows": [
+      {
+        "target_write_rec_s": 0,
+        "writer_threads": 0,
+        "sleep_sec": 0.0,
+        "achieved_write_rec_s": 0,
+        "point_read": {
+          "avg_ms": 84.36,
+          "p50_ms": 61.48,
+          "p95_ms": 151.63,
+          "p99_ms": 507.62
+        },
+        "olap_read": {
+          "avg_ms": 479.01,
+          "p50_ms": 443.59,
+          "p95_ms": 1159.53,
+          "p99_ms": 1159.53
+        },
+        "active_parts": 28,
+        "rows": 57621513,
+        "compression_ratio": 7.905
+      },
+      {
+        "target_write_rec_s": 5000,
+        "writer_threads": 2,
+        "sleep_sec": 0.5967,
+        "achieved_write_rec_s": 5400.0,
+        "write_http_errors_window": 0,
+        "point_read": {
+          "avg_ms": 39.63,
+          "p50_ms": 38.22,
+          "p95_ms": 62.65,
+          "p99_ms": 121.06
+        },
+        "olap_read": {
+          "avg_ms": 635.84,
+          "p50_ms": 610.52,
+          "p95_ms": 1140.68,
+          "p99_ms": 1140.68
+        },
+        "active_parts": 33,
+        "rows": 60651513,
+        "compression_ratio": 7.744
+      },
+      {
+        "target_write_rec_s": 10000,
+        "writer_threads": 4,
+        "sleep_sec": 0.5637,
+        "achieved_write_rec_s": 11400.0,
+        "write_http_errors_window": 0,
+        "point_read": {
+          "avg_ms": 82.04,
+          "p50_ms": 65.9,
+          "p95_ms": 178.88,
+          "p99_ms": 226.15
+        },
+        "olap_read": {
+          "avg_ms": 1301.09,
+          "p50_ms": 1167.55,
+          "p95_ms": 2291.53,
+          "p99_ms": 2291.53
+        },
+        "active_parts": 38,
+        "rows": 65067513,
+        "compression_ratio": 7.548
+      },
+      {
+        "target_write_rec_s": 15000,
+        "writer_threads": 4,
+        "sleep_sec": 0.0635,
+        "achieved_write_rec_s": 15200.0,
+        "write_http_errors_window": 0,
+        "point_read": {
+          "avg_ms": 237.11,
+          "p50_ms": 206.91,
+          "p95_ms": 441.0,
+          "p99_ms": 480.82
+        },
+        "olap_read": {
+          "avg_ms": 3608.14,
+          "p50_ms": 3648.95,
+          "p95_ms": 6079.93,
+          "p99_ms": 6079.93
+        },
+        "active_parts": 32,
+        "rows": 70720773,
+        "compression_ratio": 6.978
+      },
+      {
+        "target_write_rec_s": 20000,
+        "writer_threads": 4,
+        "sleep_sec": 0.0025,
+        "achieved_write_rec_s": 16000.0,
+        "write_http_errors_window": 0,
+        "point_read": {
+          "avg_ms": 187.04,
+          "p50_ms": 182.54,
+          "p95_ms": 273.11,
+          "p99_ms": 371.89
+        },
+        "olap_read": {
+          "avg_ms": 4752.04,
+          "p50_ms": 5058.89,
+          "p95_ms": 7100.33,
+          "p99_ms": 7100.33
+        },
+        "active_parts": 40,
+        "rows": 76960347,
+        "compression_ratio": 6.845
+      }
+    ]
+  },
+  "exp3_projection_insert": {
+    "with_projection": {
+      "throughput_rec_s": 15875.0,
+      "records_ok": 488000,
+      "http_errors": 0,
+      "nonzero": true
+    },
+    "without_projection": {
+      "throughput_rec_s": 16406.0,
+      "records_ok": 502000,
+      "http_errors": 0,
+      "nonzero": true
+    }
+  },
+  "exp2_parts_timeline": {
+    "write_phase": [
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 0,
+        "active_parts": 40,
+        "rows": 78049514,
+        "compression_ratio": 6.826
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 132000,
+        "active_parts": 42,
+        "rows": 78053775,
+        "compression_ratio": 6.826
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 268000,
+        "active_parts": 42,
+        "rows": 78053775,
+        "compression_ratio": 6.826
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 380000,
+        "active_parts": 46,
+        "rows": 78104511,
+        "compression_ratio": 6.825
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 514000,
+        "active_parts": 48,
+        "rows": 78144016,
+        "compression_ratio": 6.825
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 654000,
+        "active_parts": 50,
+        "rows": 78177649,
+        "compression_ratio": 6.824
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 774000,
+        "active_parts": 50,
+        "rows": 78177649,
+        "compression_ratio": 6.824
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 914000,
+        "active_parts": 51,
+        "rows": 78224839,
+        "compression_ratio": 6.823
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 1054000,
+        "active_parts": 53,
+        "rows": 78290553,
+        "compression_ratio": 6.822
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 1188000,
+        "active_parts": 50,
+        "rows": 78326462,
+        "compression_ratio": 6.822
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 1318000,
+        "active_parts": 53,
+        "rows": 78439285,
+        "compression_ratio": 6.82
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 1450000,
+        "active_parts": 53,
+        "rows": 78439285,
+        "compression_ratio": 6.82
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 1590000,
+        "active_parts": 47,
+        "rows": 78439285,
+        "compression_ratio": 6.82
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 1732000,
+        "active_parts": 47,
+        "rows": 78439285,
+        "compression_ratio": 6.82
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 1864000,
+        "active_parts": 48,
+        "rows": 78486751,
+        "compression_ratio": 6.819
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 1912000,
+        "active_parts": 53,
+        "rows": 78635512,
+        "compression_ratio": 6.816
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 1912000,
+        "active_parts": 55,
+        "rows": 78700921,
+        "compression_ratio": 6.815
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 1912000,
+        "active_parts": 47,
+        "rows": 78813690,
+        "compression_ratio": 6.814
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 1982000,
+        "active_parts": 52,
+        "rows": 78962557,
+        "compression_ratio": 6.811
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 2122000,
+        "active_parts": 52,
+        "rows": 78962557,
+        "compression_ratio": 6.811
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 2266000,
+        "active_parts": 52,
+        "rows": 78962557,
+        "compression_ratio": 6.811
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 2410000,
+        "active_parts": 54,
+        "rows": 79027966,
+        "compression_ratio": 6.81
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 2556000,
+        "active_parts": 53,
+        "rows": 79158784,
+        "compression_ratio": 6.808
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 2718000,
+        "active_parts": 55,
+        "rows": 79224193,
+        "compression_ratio": 6.807
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 2864000,
+        "active_parts": 55,
+        "rows": 79224193,
+        "compression_ratio": 6.807
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 3044000,
+        "active_parts": 55,
+        "rows": 79224193,
+        "compression_ratio": 6.807
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 3222000,
+        "active_parts": 52,
+        "rows": 79289602,
+        "compression_ratio": 6.806
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 3382000,
+        "active_parts": 54,
+        "rows": 79355011,
+        "compression_ratio": 6.804
+      },
+      {
+        "phase": "write_20k_approx",
+        "written_so_far": 3572000,
+        "active_parts": 54,
+        "rows": 79485829,
+        "compression_ratio": 6.802
+      }
+    ],
+    "idle_phase": [
+      {
+        "phase": "idle",
+        "active_parts": 54,
+        "rows": 79485829,
+        "compression_ratio": 6.802
+      },
+      {
+        "phase": "idle",
+        "active_parts": 52,
+        "rows": 79598765,
+        "compression_ratio": 6.8
+      },
+      {
+        "phase": "idle",
+        "active_parts": 50,
+        "rows": 79747465,
+        "compression_ratio": 6.797
+      },
+      {
+        "phase": "idle",
+        "active_parts": 46,
+        "rows": 79795140,
+        "compression_ratio": 6.796
+      },
+      {
+        "phase": "idle",
+        "active_parts": 53,
+        "rows": 80009101,
+        "compression_ratio": 6.793
+      },
+      {
+        "phase": "idle",
+        "active_parts": 49,
+        "rows": 80121981,
+        "compression_ratio": 6.791
+      },
+      {
+        "phase": "idle",
+        "active_parts": 44,
+        "rows": 80336146,
+        "compression_ratio": 6.787
+      },
+      {
+        "phase": "idle",
+        "active_parts": 45,
+        "rows": 80597782,
+        "compression_ratio": 6.782
+      },
+      {
+        "phase": "idle",
+        "active_parts": 41,
+        "rows": 80613993,
+        "compression_ratio": 6.782
+      },
+      {
+        "phase": "idle",
+        "active_parts": 48,
+        "rows": 80853099,
+        "compression_ratio": 6.778
+      },
+      {
+        "phase": "idle",
+        "active_parts": 49,
+        "rows": 81046739,
+        "compression_ratio": 6.775
+      },
+      {
+        "phase": "idle",
+        "active_parts": 40,
+        "rows": 81113623,
+        "compression_ratio": 6.773
+      }
+    ]
+  },
+  "exp4_map_vs_mat": {
+    "group_lang_map": {
+      "avg_ms": 4998.1,
+      "p50_ms": 5084.46,
+      "p95_ms": 7333.59,
+      "p99_ms": 7333.59
+    },
+    "group_lang_mat": {
+      "avg_ms": 361.09,
+      "p50_ms": 370.69,
+      "p95_ms": 565.61,
+      "p99_ms": 565.61
+    },
+    "group_source_map": {
+      "avg_ms": 4006.16,
+      "p50_ms": 3817.62,
+      "p95_ms": 5935.49,
+      "p99_ms": 5935.49
+    },
+    "group_source_mat": {
+      "avg_ms": 995.5,
+      "p50_ms": 1023.83,
+      "p95_ms": 1350.65,
+      "p99_ms": 1350.65
+    },
+    "filter_lang_map": {
+      "avg_ms": 3127.86,
+      "p50_ms": 3133.55,
+      "p95_ms": 3504.74,
+      "p99_ms": 3504.74
+    },
+    "filter_lang_mat": {
+      "avg_ms": 226.3,
+      "p50_ms": 203.06,
+      "p95_ms": 345.39,
+      "p99_ms": 345.39
+    }
+  },
+  "exp5_bloom": {
+    "chat_id": 62,
+    "with_bloom": {
+      "avg_ms": 243.41,
+      "p50_ms": 251.19,
+      "p95_ms": 321.69,
+      "p99_ms": 321.69,
+      "explain_excerpt": "Expression ((Project names + Projection))\n  Aggregating\n    Expression (Before GROUP BY)\n      Filter ((WHERE + Change column names to column identifiers))\n        ReadFromMergeTree (default.events_raw)\n        Indexes:\n          MinMax\n            Condition: true\n            Parts: 27/27\n            Granules: 9995/9995\n          Partition\n            Condition: true\n            Parts: 27/27\n            Granules: 9995/9995\n          PrimaryKey\n            Condition: true\n            Parts: 27/27\n            Granules: 9995/9995\n          Skip\n            Name: idx_chat_id\n            Description: bloom_filter GRANULARITY 4\n            Parts: 26/27\n            Granules: 8126/9995\n          Ranges: 58\n"
+    },
+    "without_bloom": {
+      "avg_ms": 253.27,
+      "p50_ms": 176.63,
+      "p95_ms": 792.7,
+      "p99_ms": 792.7,
+      "explain_excerpt": "Expression ((Project names + Projection))\n  Aggregating\n    Expression (Before GROUP BY)\n      Filter ((WHERE + Change column names to column identifiers))\n        ReadFromMergeTree (default.events_raw)\n        Indexes:\n          MinMax\n            Condition: true\n            Parts: 27/27\n            Granules: 9995/9995\n          Partition\n            Condition: true\n            Parts: 27/27\n            Granules: 9995/9995\n          PrimaryKey\n            Condition: true\n            Parts: 27/27\n            Granules: 9995/9995\n          Ranges: 27\n"
+    }
+  },
+  "exp6_kafka_vs_direct": {
+    "kafka_java_api": {
+      "throughput_rec_s": 17119.0,
+      "records": 522000,
+      "http_errors": 0,
+      "nonzero": true
+    },
+    "direct_http_insert_ch": {
+      "throughput_rec_s": 196000.0,
+      "rows_inserted_approx": 5880000,
+      "note": "INSERT SELECT into events_raw, bypass Kafka"
+    }
+  },
+  "finished": "2026-04-03T17:36:49Z",
+  "_recent_write_errors": [
+    "HTTP Error 500: ",
+    "HTTP Error 500: ",
+    "HTTP Error 500: ",
+    "HTTP Error 500: ",
+    "HTTP Error 500: ",
+    "HTTP Error 500: ",
+    "HTTP Error 500: ",
+    "HTTP Error 500: ",
+    "HTTP Error 500: ",
+    "HTTP Error 500: "
+  ]
+}

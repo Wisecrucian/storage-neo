@@ -1,0 +1,134 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Состояние сервисов",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none", "thresholds": { "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}] } }, "overrides": [] },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 },
+      "id": 1,
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "sum(up{job=\"event-storage-server\"})", "legendFormat": "App", "refId": "A" }],
+      "title": "Event Storage App",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none", "thresholds": { "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}] } }, "overrides": [] },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 1 },
+      "id": 2,
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "sum(up{job=\"clickhouse-exporter\"})", "legendFormat": "CH", "refId": "A" }],
+      "title": "ClickHouse",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none", "thresholds": { "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}] } }, "overrides": [] },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 1 },
+      "id": 3,
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "sum(up{job=\"kafka-exporter\"})", "legendFormat": "Kafka", "refId": "A" }],
+      "title": "Kafka",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none", "thresholds": { "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}] } }, "overrides": [] },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 1 },
+      "id": 4,
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "kafka_brokers", "legendFormat": "Brokers", "refId": "A" }],
+      "title": "Kafka Brokers",
+      "type": "stat"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "id": 101,
+      "title": "HTTP",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 7 },
+      "id": 5,
+      "targets": [
+        { "expr": "sum(rate(http_server_requests_seconds_count{job=\"event-storage-server\"}[1m]))", "legendFormat": "HTTP RPS", "refId": "A" }
+      ],
+      "title": "HTTP Throughput (RPS)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 7 },
+      "id": 6,
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(http_server_requests_seconds_bucket{job=\"event-storage-server\"}[5m])) by (le))", "legendFormat": "p50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=\"event-storage-server\"}[5m])) by (le))", "legendFormat": "p95", "refId": "B" }
+      ],
+      "title": "HTTP Latency (p50 / p95)",
+      "type": "timeseries"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "id": 102,
+      "title": "JVM & ресурсы",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "custom": { "lineWidth": 2, "fillOpacity": 15 } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 15 },
+      "id": 7,
+      "targets": [{ "expr": "process_cpu_usage", "legendFormat": "CPU", "refId": "A" }],
+      "title": "Process CPU",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "lineWidth": 2, "fillOpacity": 15 } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 15 },
+      "id": 8,
+      "targets": [
+        { "expr": "sum(jvm_memory_used_bytes{area=\"heap\"})", "legendFormat": "heap used", "refId": "A" },
+        { "expr": "sum(jvm_memory_max_bytes{area=\"heap\"})", "legendFormat": "heap max", "refId": "B" }
+      ],
+      "title": "JVM Heap (used / max)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none", "custom": { "lineWidth": 2, "fillOpacity": 10 } }, "overrides": [] },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 15 },
+      "id": 9,
+      "targets": [{ "expr": "jvm_threads_live_threads", "legendFormat": "threads", "refId": "A" }],
+      "title": "JVM Live Threads",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["event-storage", "infra"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" },
+  "timezone": "",
+  "title": "Event Storage Infra",
+  "uid": "event-storage-infra",
+  "version": 2,
+  "weekStart": ""
+}

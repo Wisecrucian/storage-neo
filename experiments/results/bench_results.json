@@ -1,0 +1,163 @@
+{
+  "batch_size_series": [
+    {
+      "threads": 8,
+      "batch_size": 500,
+      "duration_s": 30,
+      "total_records": 446500,
+      "throughput_rps": 14883.333333333334,
+      "errors": 0,
+      "batches": 893,
+      "lat_p50_ms": 208.34700000705197,
+      "lat_p95_ms": 618.7592089991085,
+      "lat_p99_ms": 764.9998330016388,
+      "lat_avg_ms": 269.7978586882829
+    },
+    {
+      "threads": 8,
+      "batch_size": 1000,
+      "duration_s": 30,
+      "total_records": 604000,
+      "throughput_rps": 20133.333333333332,
+      "errors": 0,
+      "batches": 604,
+      "lat_p50_ms": 313.7640829954762,
+      "lat_p95_ms": 775.550791004207,
+      "lat_p99_ms": 958.5615419928217,
+      "lat_avg_ms": 405.2871925762262
+    },
+    {
+      "threads": 8,
+      "batch_size": 2000,
+      "duration_s": 30,
+      "total_records": 614000,
+      "throughput_rps": 20466.666666666668,
+      "errors": 0,
+      "batches": 307,
+      "lat_p50_ms": 501.9586669950513,
+      "lat_p95_ms": 1704.212834010832,
+      "lat_p99_ms": 2320.4541669983882,
+      "lat_avg_ms": 790.3107482241182
+    },
+    {
+      "threads": 8,
+      "batch_size": 5000,
+      "duration_s": 30,
+      "total_records": 670000,
+      "throughput_rps": 22333.333333333332,
+      "errors": 0,
+      "batches": 134,
+      "lat_p50_ms": 788.8451250037178,
+      "lat_p95_ms": 4101.393042001291,
+      "lat_p99_ms": 4409.590708004544,
+      "lat_avg_ms": 1864.4880892763413
+    }
+  ],
+  "thread_count_series": [
+    {
+      "threads": 1,
+      "batch_size": 2000,
+      "duration_s": 30,
+      "total_records": 504000,
+      "throughput_rps": 16800.0,
+      "errors": 0,
+      "batches": 252,
+      "lat_p50_ms": 115.14841701136902,
+      "lat_p95_ms": 161.73095798876602,
+      "lat_p99_ms": 207.5031660060631,
+      "lat_avg_ms": 119.45844642849849
+    },
+    {
+      "threads": 2,
+      "batch_size": 2000,
+      "duration_s": 30,
+      "total_records": 514000,
+      "throughput_rps": 17133.333333333332,
+      "errors": 0,
+      "batches": 257,
+      "lat_p50_ms": 182.6350830087904,
+      "lat_p95_ms": 531.9684589921962,
+      "lat_p99_ms": 1308.4824170073261,
+      "lat_avg_ms": 234.66800096933324
+    },
+    {
+      "threads": 4,
+      "batch_size": 2000,
+      "duration_s": 30,
+      "total_records": 666000,
+      "throughput_rps": 22200.0,
+      "errors": 0,
+      "batches": 333,
+      "lat_p50_ms": 311.7455419996986,
+      "lat_p95_ms": 607.549124993966,
+      "lat_p99_ms": 730.8807920053368,
+      "lat_avg_ms": 363.10226339658067
+    },
+    {
+      "threads": 8,
+      "batch_size": 2000,
+      "duration_s": 30,
+      "total_records": 650000,
+      "throughput_rps": 21666.666666666668,
+      "errors": 0,
+      "batches": 325,
+      "lat_p50_ms": 381.57566598965786,
+      "lat_p95_ms": 1761.9106660131365,
+      "lat_p99_ms": 2039.0271249925718,
+      "lat_avg_ms": 747.0631293978882
+    },
+    {
+      "threads": 16,
+      "batch_size": 2000,
+      "duration_s": 30,
+      "total_records": 600000,
+      "throughput_rps": 20000.0,
+      "errors": 0,
+      "batches": 300,
+      "lat_p50_ms": 611.0437919996912,
+      "lat_p95_ms": 4958.604957995703,
+      "lat_p99_ms": 5989.813625012175,
+      "lat_avg_ms": 1628.437782759526
+    },
+    {
+      "threads": 32,
+      "batch_size": 2000,
+      "duration_s": 30,
+      "total_records": 632000,
+      "throughput_rps": 21066.666666666668,
+      "errors": 0,
+      "batches": 316,
+      "lat_p50_ms": 1949.153583002044,
+      "lat_p95_ms": 8834.050999997999,
+      "lat_p99_ms": 9022.12112500274,
+      "lat_avg_ms": 3178.981280582349
+    }
+  ],
+  "read_idle": {
+    "moderation_count": 235,
+    "moderation_p50_ms": 103.58929200447164,
+    "moderation_p95_ms": 280.0644579983782,
+    "moderation_avg_ms": 116.66785512420478,
+    "analytics_count": 5,
+    "analytics_p50_ms": 855.8732499950565,
+    "analytics_p95_ms": 9626.41891700332,
+    "analytics_avg_ms": 3771.5595251997
+  },
+  "read_under_load": {
+    "moderation_count": 86,
+    "moderation_p50_ms": 303.9479169965489,
+    "moderation_p95_ms": 1223.3967499923892,
+    "moderation_avg_ms": 425.2583846983873,
+    "analytics_count": 2,
+    "analytics_p50_ms": 2243.5497920087073,
+    "analytics_p95_ms": 2243.5497920087073,
+    "analytics_avg_ms": 1700.1391460071318
+  },
+  "storage": {
+    "rows": "24677790",
+    "disk": "1.23 GiB",
+    "ratio": "3.07",
+    "parts": "9",
+    "kafka_lag": 169211
+  }
+}

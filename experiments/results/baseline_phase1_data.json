@@ -1,0 +1,76 @@
+{
+  "meta": {
+    "date": "2026-03-27",
+    "test_type": "mixed_workload",
+    "duration_sec": 120,
+    "write_threads": 2,
+    "write_batch_size": 500,
+    "point_read_threads": 2,
+    "analytics_threads": 1,
+    "clickhouse_version": "26.2.5.45",
+    "environment": "docker_single_node_mac"
+  },
+  "storage": {
+    "total_rows": 24879500,
+    "active_parts": 13,
+    "table_compressed_bytes": 1213127484,
+    "table_uncompressed_bytes": 8941517679,
+    "table_compression_ratio": 7.43,
+    "projection_by_user": {
+      "compressed_bytes": 1741554007,
+      "uncompressed_bytes": 8792142347,
+      "compression_ratio": 5.09,
+      "rows": 24879500,
+      "parts": 13
+    }
+  },
+  "columns": [
+    {"column": "attrs",       "type": "Map(String, String)",    "codec": "ZSTD(3)",          "compressed_mib": 524.34, "uncompressed_gib": 7.02,  "ratio": 13.71, "pct_disk": 45.9},
+    {"column": "event_id",   "type": "UUID",                   "codec": "LZ4",              "compressed_mib": 376.46, "uncompressed_mib": 374.92,"ratio": 1.00,  "pct_disk": 33.0},
+    {"column": "message_id", "type": "UInt64 DEFAULT 0",        "codec": "T64, LZ4",         "compressed_mib": 74.55,  "uncompressed_mib": 187.46,"ratio": 2.51,  "pct_disk": 6.5},
+    {"column": "chat_id",    "type": "UInt64 DEFAULT 0",        "codec": "T64, LZ4",         "compressed_mib": 58.24,  "uncompressed_mib": 187.46,"ratio": 3.22,  "pct_disk": 5.1},
+    {"column": "user_id",    "type": "UInt64 DEFAULT 0",        "codec": "T64, LZ4",         "compressed_mib": 58.22,  "uncompressed_mib": 187.46,"ratio": 3.22,  "pct_disk": 5.1},
+    {"column": "attr_score", "type": "Int32",                  "codec": "default",          "compressed_mib": 26.73,  "uncompressed_mib": 93.73, "ratio": 3.51,  "pct_disk": 2.3},
+    {"column": "ingest_time","type": "DateTime",               "codec": "DoubleDelta, LZ4", "compressed_mib": 11.09,  "uncompressed_mib": 93.73, "ratio": 8.45,  "pct_disk": 1.0},
+    {"column": "attr_source","type": "LowCardinality(String)",  "codec": "ZSTD(1)",          "compressed_mib": 9.13,   "uncompressed_mib": 23.48, "ratio": 2.57,  "pct_disk": 0.8},
+    {"column": "event_time", "type": "DateTime",               "codec": "DoubleDelta, LZ4", "compressed_mib": 2.66,   "uncompressed_mib": 93.73, "ratio": 35.28, "pct_disk": 0.2},
+    {"column": "attr_lang",  "type": "LowCardinality(String)",  "codec": "ZSTD(1)",          "compressed_kib": 567.14, "uncompressed_mib": 23.48, "ratio": 42.39, "pct_disk": 0.05},
+    {"column": "record_type","type": "LowCardinality(String)",  "codec": "ZSTD(1)",          "compressed_kib": 23.40,  "uncompressed_mib": 23.48, "ratio": 1027.31,"pct_disk": 0.002}
+  ],
+  "write_performance": {
+    "total_records": 309000,
+    "throughput_rec_per_sec": 2548,
+    "batches_success": 618,
+    "errors": 0,
+    "batch_size_p50": 496,
+    "batch_size_p95": 496,
+    "flush_latency_p50_ms": 172,
+    "flush_latency_p95_ms": 281,
+    "flush_latency_p99_ms": 566,
+    "flush_latency_max_ms": 2035
+  },
+  "read_performance": {
+    "moderation": {
+      "queries": 208,
+      "throughput_qps": 1.7,
+      "latency_p50_ms": 805,
+      "latency_p95_ms": 910,
+      "latency_avg_ms": 1075,
+      "errors": 0
+    },
+    "analytics": {
+      "queries": 15,
+      "throughput_qps": 0.1,
+      "latency_avg_ms": 7747,
+      "latency_max_ms": 25337,
+      "errors": 0
+    }
+  },
+  "record_type_distribution": {
+    "MESSAGE":    {"count": 138890, "pct": 45},
+    "MODERATION": {"count": 62097,  "pct": 20},
+    "PURCHASE":   {"count": 46507,  "pct": 15},
+    "SYSTEM":     {"count": 37040,  "pct": 12},
+    "OTHER":      {"count": 24466,  "pct": 8}
+  }
+}
