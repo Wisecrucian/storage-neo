@@ -1,0 +1,13 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = "event-storage"
+
+
+include("event-storage-server")
+include("event-storage-client")
+
